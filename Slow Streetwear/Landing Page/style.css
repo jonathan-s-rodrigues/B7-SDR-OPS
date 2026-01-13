@@ -1,0 +1,238 @@
+/* 1. CONFIGURAÇÕES GERAIS (VARS) */
+:root {
+    --primary-yellow: #f1c40f;
+    --dark-bg: #0a0a0a;
+    --card-bg: #141414;
+    --text-light: #ffffff;
+    --text-gray: #a0a0a0;
+    --danger: #e74c3c;
+    --transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Arial Black', Gadget, sans-serif;
+    background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
+                url('Imagens/fundo.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: var(--text-light);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* 2. HEADER & LOGO */
+header {
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+}
+
+.logo {
+    max-width: 180px;
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    transition: var(--transition);
+}
+
+.logo:hover {
+    transform: scale(1.05);
+}
+
+/* 3. HERO SECTION */
+.hero {
+    height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.hero h1 {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    color: var(--text-gray);
+    font-family: 'Arial', sans-serif;
+    margin-bottom: 30px;
+}
+
+.cta-button {
+    background-color: var(--primary-yellow);
+    color: #000;
+    padding: 18px 40px;
+    text-decoration: none;
+    font-weight: 900;
+    text-transform: uppercase;
+    border-radius: 0px; /* Estilo industrial reto */
+    transition: var(--transition);
+    display: inline-block;
+}
+
+.cta-button:hover {
+    background-color: #fff;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(241, 196, 15, 0.3);
+}
+
+/* 4. GRID DE PRODUTOS */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 40px;
+    padding: 80px 8%;
+}
+
+.product-card {
+    background: var(--card-bg);
+    padding: 25px;
+    position: relative;
+    border: 1px solid #222;
+    transition: var(--transition);
+}
+
+.product-card:hover {
+    border-color: var(--primary-yellow);
+    transform: translateY(-10px);
+}
+
+/* 5. EFEITO DE TROCA DE IMAGEM (CORRIGIDO) */
+.product-image-container {
+    position: relative;
+    width: 100%;
+    height: 400px; 
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: #000;
+}
+
+.product-image-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+.img-main {
+    z-index: 2;
+    opacity: 1;
+}
+
+.img-hover {
+    z-index: 1;
+    opacity: 0;
+    transform: scale(1.1); /* Efeito de zoom out ao aparecer */
+}
+
+/* Trigger do Hover */
+.product-card:hover .img-main {
+    opacity: 0;
+}
+
+.product-card:hover .img-hover {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* 6. DETALHES DO PRODUTO */
+.product-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.product-card p {
+    font-family: 'Arial', sans-serif;
+    color: var(--text-gray);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    min-height: 40px;
+}
+
+.badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--danger);
+    color: white;
+    padding: 6px 12px;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 10;
+    text-transform: uppercase;
+}
+
+/* 7. BOTÃO WHATSAPP */
+.buy-link {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    color: var(--primary-yellow);
+    border: 2px solid var(--primary-yellow);
+    text-decoration: none;
+    font-weight: 900;
+    text-align: center;
+    transition: var(--transition);
+    text-transform: uppercase;
+}
+
+.buy-link:hover {
+    background: var(--primary-yellow);
+    color: #000;
+}
+
+/* 8. FOOTER & TIMER - CENTRALIZADO */
+.footer-cta {
+    background: #000;
+    padding: 80px 20px; /* Aumentei o respiro para dar mais impacto */
+    border-top: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza horizontalmente */
+    justify-content: center;
+    text-align: center;
+}
+
+.countdown {
+    width: 100%;
+    max-width: 600px;
+}
+
+.countdown span {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-gray);
+    letter-spacing: 5px; /* Espaçamento entre letras estilo luxo */
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+#timer {
+    font-size: clamp(2.5rem, 8vw, 5rem); /* Tamanho responsivo */
+    color: var(--primary-yellow);
+    font-weight: 900;
+    letter-spacing: 2px;
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(241, 196, 15, 0.3);
+    font-family: 'Courier New', Courier, monospace; /* Fonte mono para lembrar relógios digitais */
+}

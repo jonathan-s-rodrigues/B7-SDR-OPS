@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Pedidos - Vênus Joias</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='pedidos.css') }}">
+</head>
+<body>
+
+    <header>
+        <h1>Painel de Pedidos Vênus Joias</h1>
+    </header>
+
+    <main>
+        <section class="tabela-pedidos">
+            <h2>🛒 Lista de Compras Recentes</h2>
+            
+            <div class="acoes-pedidos">
+                <button id="btnAdicionar" class="btn-acao">➕ Adicionar Novo Item</button>
+            </div>
+
+            <div id="formularioAdicionar" style="display:none;">
+                <h3>Preencha os dados do novo item</h3>
+                <input type="number" id="novoID" placeholder="ID do Pedido (Ex: 2025003)" required>
+                <input type="text" id="novaData" placeholder="Data (Ex: 27/11/2025)" required>
+                <input type="text" id="novoItem" placeholder="Nome do Item/Produto" required>
+                <input type="number" step="0.01" id="novoValor" placeholder="Valor Unitário (Ex: 99.50)" required>
+                <input type="number" id="novaQuantidade" placeholder="Quantidade" required>
+                <button id="btnSalvarNovo" class="btn-acao salvar">Salvar Item</button>
+                <button id="btnCancelarNovo" class="btn-acao cancelar">Cancelar</button>
+            </div>
+
+            <table id="tabelaPedidos">
+                <thead>
+                    <tr>
+                        <th>ID do Pedido</th>
+                        <th>Data da Compra</th>
+                        <th>Itens (Descrição)</th>
+                        <th>Valor Unitário</th>
+                        <th>Quantidade</th>
+                        <th>Valor Total do Item</th>
+                        <th>Valor Total do Pedido</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pedidos %}
+                    <tr data-item-id="{{ item.Item_ID }}">
+                        
+                        {% if item.Primeira_Linha %}
+                            {% set total_itens_pedido = pedidos | selectattr('ID_Pedido', '==', item.ID_Pedido) | list | length %}
+                            
+                            <td data-label="ID do Pedido" rowspan="{{ total_itens_pedido }}" contenteditable="true">{{ item.ID_Pedido }}</td>
+                            <td data-label="Data da Compra" rowspan="{{ total_itens_pedido }}" contenteditable="true">{{ item.Data_Compra }}</td>
+                        {% endif %}
+
+                        <td data-label="Itens (Descrição)" contenteditable="true">{{ item.Item }}</td>
+                        <td data-label="Valor Unitário" contenteditable="true">{{ item.Valor_Unitario_Fmt }}</td>
+                        <td data-label="Quantidade" contenteditable="true">{{ item.Quantidade }}</td>
+                        
+                        <td data-label="Valor Total Item">{{ item.Valor_Total_Item_Fmt }}</td>
+                        
+                        {% if item.Primeira_Linha %}
+                            <td data-label="Valor Total Pedido" class="total-pedido" rowspan="{{ total_itens_pedido }}">
+                                {{ item.Valor_Total_Pedido_Fmt }}
+                            </td>
+                        {% endif %}
+
+                        <td data-label="Ações">
+                            <button class="btn-remove">🗑️ Remover</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+
+            {% if not pedidos %}
+            <p style="text-align: center; color: red;">Nenhum dado encontrado ou erro ao ler a planilha Excel.</p>
+            {% endif %}
+
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Vênus Joias. Painel Administrativo.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='pedidos.js') }}"></script>
+
+</body>
+</html>
