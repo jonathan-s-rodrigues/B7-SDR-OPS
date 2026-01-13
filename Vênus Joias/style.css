@@ -1,207 +1,124 @@
-/* Estilos Gerais e Reset */
-body {
-    font-family: 'Georgia', serif; /* Fonte clássica e elegante */
-    margin: 0;
-    padding: 0;
-    background-color: #f8f8f8; /* Fundo suave */
-    color: #333;
-    line-height: 1.6;
-}
-
-/* Cores e Elementos de Luxo */
 :root {
-    --cor-primaria: #a38b6d; /* Tonalidade de Ouro/Cobre */
-    --cor-secundaria: #5a5a5a; /* Cinza Escuro para texto */
-    --cor-fundo: #ffffff;
-    --cor-destaque: #e0c89a; /* Dourado Claro */
+    --bg-page: #fdfaf8;
+    --primary-gold: #c5a386;
+    --soft-nude: #f2e8e4;
+    --accent-pink: #d8b4b4;
+    --text-dark: #5a4a42;
+    --white: #ffffff;
+    --shadow: 0 8px 30px rgba(0,0,0,0.03);
 }
 
-/* Cabeçalho (Header) */
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-dark);
+    margin: 0; padding: 0;
+}
+
 header {
-    background-color: var(--cor-fundo);
-    color: var(--cor-secundaria);
-    padding: 20px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
+    background-color: var(--white);
+    color: var(--primary-gold);
+    padding: 30px;
+    text-align: center;
+    border-bottom: 1px solid var(--soft-nude);
 }
 
 header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
     margin: 0;
-    font-family: 'Times New Roman', serif;
     letter-spacing: 2px;
+    font-style: italic;
 }
 
-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-}
+main { max-width: 900px; margin: 30px auto; padding: 0 20px; }
 
-nav ul li a {
-    text-decoration: none;
-    color: var(--cor-secundaria);
-    margin-left: 20px;
-    font-weight: bold;
-    transition: color 0.3s;
-}
-
-nav ul li a:hover {
-    color: var(--cor-primaria); /* Efeito de hover dourado */
-}
-
-/* Seção de Destaque (Hero) */
-.hero {
-    background: url('imagens/fundo-joias.jpg') no-repeat center center/cover;
-    /* Lembre-se de adicionar uma imagem de fundo! */
-    color: white;
-    text-align: center;
-    padding: 100px 20px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-}
-
-.hero h2 {
-    font-size: 2.5em;
-    margin-bottom: 10px;
-    color: var(--cor-destaque);
-}
-
-/* Catálogo de Produtos */
-.catalogo {
-    padding: 40px 20px;
-    text-align: center;
-}
-
-.catalogo h2 {
-    color: var(--cor-primaria);
-    font-size: 2em;
+.card {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
     margin-bottom: 30px;
-    border-bottom: 2px solid var(--cor-destaque);
-    display: inline-block;
-    padding-bottom: 5px;
+    border: 1px solid rgba(242, 232, 228, 0.5);
 }
 
-.produtos-grid {
+h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--primary-gold);
+    border-bottom: 1px solid var(--soft-nude);
+    padding-bottom: 10px;
+}
+
+.grid-form {
     display: grid;
-    /* Cria uma grade responsiva com 3 colunas em telas maiores */
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-    gap: 30px;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.produto {
-    background-color: var(--cor-fundo);
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s, box-shadow 0.3s;
-    text-align: left;
-}
-
-.produto:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.produto img {
-    width: 100%;
-    height: auto;
-    max-height: 300px; /* Limita a altura das imagens */
-    object-fit: cover;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
     margin-bottom: 15px;
-    border-radius: 3px;
 }
 
-.produto h3 {
-    color: var(--cor-secundaria);
-    margin-top: 0;
-    font-size: 1.4em;
-}
+.divisor { border: 0; border-top: 1px solid var(--soft-nude); margin: 20px 0; }
 
-.produto .descricao {
-    color: #666;
-    font-size: 0.9em;
-    min-height: 40px;
-}
+label { font-size: 0.7rem; text-transform: uppercase; color: var(--primary-gold); font-weight: 600; margin-bottom: 5px; }
 
-.produto .preco {
-    font-weight: bold;
-    color: var(--cor-primaria);
-    font-size: 1.2em;
-    margin-top: 10px;
-}
-
-/* Outras Seções */
-#sobre, #contato {
-    padding: 40px 20px;
-    text-align: center;
-    background-color: #f1f1f1;
-    margin-top: 20px;
-}
-
-/* Rodapé (Footer) */
-footer {
-    background-color: var(--cor-secundaria);
-    color: white;
-    text-align: center;
-    padding: 15px 0;
-    font-size: 0.85em;
-}
-
-/* Responsividade Básica (para garantir que funcione bem em celulares) */
-@media (max-width: 768px) {
-    header {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    nav ul {
-        margin-top: 10px;
-    }
-
-    nav ul li a {
-        margin: 0 10px;
-    }
-
-    .produtos-grid {
-        /* Garante que o grid use o máximo de espaço em telas menores */
-        grid-template-columns: 1fr; 
-    }
-}
-
-/* Estilos para o Botão "Comprar" */
-.btn-comprar {
-    display: block; /* Ocupa a largura total do produto */
-    width: 100%;
-    text-align: center;
+input {
     padding: 10px;
-    margin-top: 15px;
-    
-    /* Cores elegantes */
-    background-color: var(--cor-primaria); /* Dourado/Cobre */
+    border: 1px solid var(--soft-nude);
+    border-radius: 10px;
+    background-color: var(--bg-page);
+}
+
+/* Botões */
+button { border: none; cursor: pointer; border-radius: 10px; font-family: 'Montserrat', sans-serif; transition: 0.3s; }
+
+.btn-secundario { background-color: var(--soft-nude); color: var(--text-dark); padding: 10px; font-size: 0.8rem; }
+.btn-secundario:hover { background-color: var(--accent-pink); color: white; }
+
+.btn-adicionar {
+    background-color: var(--accent-pink);
     color: white;
-    text-decoration: none;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-    transition: background-color 0.3s, transform 0.2s;
+    padding: 15px;
+    width: 100%;
+    margin-top: 20px;
+    text-transform: uppercase;
+    font-weight: 600;
 }
 
-.btn-comprar:hover {
-    background-color: #7e6b52; /* Escurece um pouco no hover */
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+.btn-alinhar { display: flex; align-items: flex-end; }
 
-/* Garante que o botão não tenha margin extra dentro do produto */
-.produto {
+/* Lista Temporária */
+.lista-itens-temp { margin: 15px 0; font-size: 0.9rem; }
+.item-temp-linha {
     display: flex;
-    flex-direction: column;
-    justify-content: space-between; /* Empurra o botão para baixo, se necessário */
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--soft-nude);
 }
+
+/* Pedido Salvo (Layout de Grupo) */
+.pedido-salvo {
+    border: 1px solid var(--soft-nude);
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+.pedido-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    color: var(--primary-gold);
+    margin-bottom: 10px;
+}
+.pedido-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    font-size: 0.85rem;
+    padding: 5px 0;
+}
+.pedido-footer {
+    text-align: right;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--soft-nude);
+    font-weight: 600;
+}
+.btn-excluir-pedido { color: #e74c3c; background: none; font-size: 0.7rem; margin-top: 5px; text-decoration: underline; }
