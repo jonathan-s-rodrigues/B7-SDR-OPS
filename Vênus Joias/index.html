@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vênus Joias - Pedidos </title>
+    <title>Vênus Joias | Pedidos</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,16 +11,16 @@
 
 <header>
     <h1>Vênus Joias</h1>
+    <p style="font-size: 0.7rem; color: var(--accent-pink); margin: 0;">Sincronizado na Nuvem</p>
 </header>
 
 <main>
-    <section class="card">
-        <h3>➕ Lançar Novo Pedido</h3>
-        
+    <section class="card no-print">
+        <h3>➕ Novo Pedido</h3>
         <div class="grid-form">
             <div class="campo">
-                <label>Nome do(a) Cliente</label>
-                <input type="text" id="cliente" placeholder="Ex: Helena Souza">
+                <label>Nome da Cliente</label>
+                <input type="text" id="cliente" placeholder="Helena Souza">
             </div>
             <div class="campo">
                 <label>Data</label>
@@ -30,40 +30,39 @@
 
         <hr class="divisor">
 
-        <div class="grid-form itens-input">
+        <div class="grid-form">
             <div class="campo">
                 <label>Item / Joia</label>
-                <input type="text" id="itemNome" placeholder="Ex: Colar Elo">
+                <input type="text" id="itemNome" placeholder="Ex: Anel Pérola">
             </div>
             <div class="campo">
-                <label>Valor Unit. (R$)</label>
-                <input type="number" id="itemValor" step="0.01" placeholder="0,00">
+                <label>Valor Unit.</label>
+                <input type="number" id="itemValor" step="0.01" placeholder="0.00">
             </div>
             <div class="campo">
                 <label>Qtd</label>
                 <input type="number" id="itemQtd" value="1">
             </div>
             <div class="campo btn-alinhar">
-                <button class="btn-secundario" onclick="adicionarItemNaLista()">+ Adicionar Item</button>
+                <button class="btn-secundario" id="btnAddItem">+ Adicionar</button>
             </div>
         </div>
 
-        <div id="listaItensTemporaria" class="lista-itens-temp">
-            </div>
+        <div id="listaItensTemporaria" class="lista-itens-temp"></div>
 
-        <button class="btn-adicionar" id="btnFinalizarPedido" style="display: none;" onclick="finalizarPedido()">
-            Finalizar e Salvar Pedido
+        <button class="btn-adicionar" id="btnFinalizar" style="display: none;">
+            Finalizar e Salvar na Nuvem
         </button>
     </section>
 
     <section class="card">
         <h3>🛒 Histórico de Pedidos</h3>
         <div id="containerPedidos">
-            </div>
-        <div id="mensagemVazio" class="vazio">Nenhum pedido registrado.</div>
+            <p class="vazio">Carregando dados da nuvem...</p>
+        </div>
     </section>
 </main>
 
-<script src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
