@@ -226,13 +226,3 @@ header {
     margin-bottom: 20px;
     text-transform: uppercase;
 }
-
-#timer {
-    font-size: clamp(2.5rem, 8vw, 5rem); 
-    color: var(--primary-yellow);
-    font-weight: 900;
-    letter-spacing: 2px;
-    line-height: 1;
-    text-shadow: 0 0 30px rgba(241, 196, 15, 0.3);
-    font-family: 'Courier New', Courier, monospace;
-}

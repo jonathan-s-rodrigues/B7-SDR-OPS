@@ -9,8 +9,25 @@
 </head>
 <body>
 
+    <div id="login-overlay" class="login-overlay">
+    <div class="card login-card">
+        <h2 style="font-family: 'Playfair Display', serif; color: var(--primary-gold);">Acesso Restrito</h2>
+        <p>Vênus Joias - Painel Administrativo</p>
+        <div class="campo">
+            <input type="email" id="login-email" placeholder="E-mail">
+        </div>
+        <div class="campo" style="margin-top: 10px;">
+            <input type="password" id="login-senha" placeholder="Senha">
+        </div>
+        <button class="btn-adicionar" id="btnLogar">Entrar</button>
+        <p id="login-erro" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">Acesso negado.</p>
+    </div>
+</div>
+
+
 <header>
     <h1>Vênus Joias</h1>
+    <button id="btnSair" class="btn-tool" style="display:none; margin-top: 10px;">Sair do Painel</button>
     <p style="font-size: 0.7rem; color: var(--accent-pink); margin: 0;">Sincronizado na Nuvem</p>
 </header>
 

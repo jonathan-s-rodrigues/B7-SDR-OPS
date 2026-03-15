@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vênus Joias | Elegância e Sofisticação</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="container header-flex">
+            <div class="logo">Vênus Joias</div>
+            <nav class="nav-menu">
+                <button id="cart-btn" class="cart-icon">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span id="cart-count">0</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Detalhes que contam histórias</h1>
+            <p>Descubra a coleção exclusiva para momentos inesquecíveis.</p>
+            <a href="#vitrine" class="btn-cta">Ver Coleção</a>
+        </div>
+    </section>
+
+    <main class="container" id="vitrine">
+        <div class="filters">
+            <button class="filter-btn active" data-cat="todos">Todos</button>
+            <button class="filter-btn" data-cat="pulseiras">Pulseiras</button>
+            <button class="filter-btn" data-cat="colares">Colares</button>
+            <button class="filter-btn" data-cat="brincos">Brincos</button>
+            <button class="filter-btn" data-cat="conjuntos">Conjuntos</button>
+            <button class="filter-btn" data-cat="correntes">Correntes</button>
+            <button class="filter-btn" data-cat="tornozeleiras">Tornozeleiras</button>
+            <button class="filter-btn" data-cat="acessorios">Acessórios</button>
+        </div>
+
+        <div id="products-grid" class="products-grid">
+            </div>
+    </main>
+
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>Sua Sacola</h2>
+                <button id="close-cart" class="close-btn">&times;</button>
+            </div>
+            <div id="cart-items" class="cart-items">
+                </div>
+            <div class="cart-footer">
+                <div class="total">
+                    <span>Total:</span>
+                    <span id="cart-total">R$ 0,00</span>
+                </div>
+                <button id="checkout-btn" class="btn-checkout">Finalizar no WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Vênus Joias. Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

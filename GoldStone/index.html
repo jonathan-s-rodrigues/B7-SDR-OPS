@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold Stone Marmoraria | Alto Padrão</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="Imagens/goldstone.png" alt="Gold Stone" />
+            <span>GOLD STONE</span>
+        </div>
+
+        <button class="hamburger" aria-label="Abrir menu" aria-expanded="false" type="button">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
+        <nav>
+            <a href="#catalogo">Pedras</a>
+            <a href="https://wa.me/5511958402011" class="btn-contato">Orçamento</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Realizando Sonhos, <br><span>Esculpindo Excelência</span></h1>
+            <p>Especializada em projetos de alto padrão em mármores e granitos.</p>
+            <a href="https://wa.me/5511958402011" class="cta-button">Falar com Especialista</a>
+        </div>
+    </section>
+
+    <section id="catalogo" class="gallery">
+        <h2>Nosso Catálogo Especial</h2>
+        <p>Explore os detalhes das nossas pedras exclusivas.</p>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="modelFilter">Modelo</label>
+                <select id="modelFilter">
+                    <option value="all">Todos</option>
+                    <option value="pia">Pia</option>
+                    <option value="lavatório">Lavatório</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="stoneTypeFilter">Tipo de Pedra</label>
+                <select id="stoneTypeFilter">
+                    <option value="all">Todos</option>
+                    <option value="mármore">Mármore</option>
+                    <option value="granito">Granito</option>
+                    <option value="quartzo">Quartzo</option>
+                    <option value="outros">Outros</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid" id="catalogGrid"></div>
+    </section>
+
+    <div class="modal" id="galleryModal" aria-hidden="true">
+        <div class="modal-backdrop" data-close="true"></div>
+        <div class="modal-content">
+            <button class="modal-close" type="button" aria-label="Fechar">×</button>
+            <button class="modal-nav modal-prev" type="button" aria-label="Anterior">‹</button>
+            <img id="modalImage" src="" alt="">
+            <button class="modal-nav modal-next" type="button" aria-label="Próxima">›</button>
+            <div class="modal-caption" id="modalCaption"></div>
+        </div>
+    </div>
+
+    <a href="https://wa.me/5511958402011" class="whatsapp-float" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <footer>
+        <p>&copy; 2026 Gold Stone Marmoraria. Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

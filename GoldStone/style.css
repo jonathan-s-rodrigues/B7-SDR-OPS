@@ -1,0 +1,404 @@
+:root {
+    --gold: #D4AF37;
+    --dark: #121212;
+    --light: #f4f4f4;
+    --gray: #1e1e1e;
+}
+
+body {
+    margin: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--dark);
+    color: var(--light);
+    scroll-behavior: smooth;
+}
+
+/* Header */
+header {
+    padding: 15px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.95);
+    position: fixed;
+    width: 90%;
+    z-index: 1000;
+    border-bottom: 1px solid var(--gold);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    color: var(--gold);
+}
+
+.logo img {
+    height: 38px;
+    width: auto;
+    object-fit: contain;
+}
+
+.logo span {
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+}
+
+nav a {
+    color: var(--light);
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 0.9rem;
+    transition: 0.3s;
+}
+
+.hamburger {
+    display: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    margin-left: 20px;
+}
+
+.hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    margin: 4px 0;
+    background: var(--light);
+    border-radius: 2px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+header.nav-open .hamburger span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+}
+
+header.nav-open .hamburger span:nth-child(2) {
+    opacity: 0;
+}
+
+header.nav-open .hamburger span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+}
+
+.btn-contato {
+    border: 1px solid var(--gold);
+    padding: 8px 15px;
+    border-radius: 4px;
+}
+
+.btn-contato:hover {
+    background: var(--gold);
+    color: black;
+}
+
+/* Hero Section */
+.hero {
+    height: 90vh;
+    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1350&q=80');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+    line-height: 1.2;
+}
+
+.hero h1 span {
+    color: var(--gold);
+}
+
+.cta-button {
+    display: inline-block;
+    background: var(--gold);
+    color: black;
+    padding: 18px 35px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 25px;
+    border-radius: 2px;
+    transition: 0.4s;
+}
+
+.cta-button:hover {
+    letter-spacing: 1px;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+
+/* Galeria com Zoom */
+.gallery {
+    padding: 80px 5%;
+    text-align: center;
+}
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: #ddd;
+    font-size: 0.9rem;
+}
+
+.filter-group label {
+    margin-bottom: 6px;
+}
+
+.filter-group select {
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(212, 175, 55, 0.6);
+    background: rgba(0,0,0,0.65);
+    color: var(--light);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.stone-card {
+    background: var(--gray);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.zoom-container {
+    overflow: hidden;
+    height: 300px;
+}
+
+/* Modal de galeria */
+.modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: rgba(0,0,0,0.85);
+    border-radius: 8px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+}
+
+.modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    font-size: 2.4rem;
+    color: rgba(255,255,255,0.9);
+    cursor: pointer;
+}
+
+.modal-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.55);
+    border: none;
+    color: white;
+    font-size: 2.4rem;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-prev {
+    left: 14px;
+}
+
+.modal-next {
+    right: 14px;
+}
+
+.modal img {
+    max-width: 100%;
+    max-height: 70vh;
+    border-radius: 6px;
+    object-fit: contain;
+}
+
+.modal-caption {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.95rem;
+    text-align: center;
+    max-width: 90vw;
+}
+
+.zoom-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.stone-card:hover .zoom-container img {
+    transform: scale(1.4);
+}
+
+.stone-info {
+    padding: 20px;
+}
+
+.stone-info h3 {
+    color: var(--gold);
+    margin-bottom: 10px;
+}
+
+/* WhatsApp Float */
+.whatsapp-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #25d366;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+footer {
+    padding: 40px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* Responsividade */
+@media (max-width: 900px) {
+    header {
+        width: 100%;
+        padding: 12px 5%;
+    }
+
+    nav {
+        display: none;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+        width: 100%;
+        margin-top: 12px;
+    }
+
+    header.nav-open nav {
+        display: flex;
+    }
+
+    .hero h1 {
+        font-size: 2.4rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+    }
+
+    .cta-button {
+        padding: 14px 28px;
+    }
+
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hamburger {
+        display: block;
+    }
+}
+
+@media (max-width: 500px) {
+    header {
+        padding: 10px 4%;
+    }
+
+    .logo span {
+        font-size: 1.1rem;
+    }
+
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .hero p {
+        font-size: 0.95rem;
+    }
+
+    .cta-button {
+        padding: 12px 22px;
+        font-size: 0.95rem;
+    }
+
+    .modal-content {
+        padding: 14px;
+        gap: 8px;
+    }
+
+    .modal img {
+        max-height: 60vh;
+    }
+
+    .whatsapp-float {
+        width: 50px;
+        height: 50px;
+        font-size: 26px;
+        bottom: 20px;
+        right: 20px;
+    }
+}
