@@ -1,175 +1,419 @@
-// Simulação de Banco de Dados (Substituir futuramente pelo Firebase)
-const productsData = [
-    { id: 6, name: "Brinco Bola 4", price: 0.00, category: "brincos", img: "Imagens/brincobola4.webp" },
-    { id: 7, name: "Brinco Bola 5", price: 0.00, category: "brincos", img: "Imagens/brincobola5.webp" },
-    { id: 8, name: "Brinco Bola 6", price: 0.00, category: "brincos", img: "Imagens/brincobola6.webp" },
-    { id: 9, name: "Brinco Quad Mina", price: 0.00, category: "brincos", img: "Imagens/brincoquadmina.webp" },
-    { id: 10, name: "Brinco Quad Zirconia", price: 0.00, category: "brincos", img: "Imagens/brincoquadzirconia.webp" },
-    { id: 11, name: "Brinco Trio Borboleta", price: 0.00, category: "brincos", img: "Imagens/brincotrioborboleta.webp" },
-    { id: 12, name: "Brinco Trio CBF", price: 0.00, category: "brincos", img: "Imagens/brincotriocbf.webp" },
-    { id: 13, name: "Colar Coração", price: 0.00, category: "colares", img: "Imagens/colarcoracao.webp" },
-    { id: 14, name: "Conjunto Borboleta", price: 0.00, category: "conjuntos", img: "Imagens/conjborboleta.webp" },
-    { id: 15, name: "Corrente Singapura com Bola", price: 0.00, category: "correntes", img: "Imagens/correntesingapuracombola.webp" },
-    { id: 16, name: "Corrente Singapura Grossa", price: 0.00, category: "correntes", img: "Imagens/correntesingapuragrossa.webp" },
-    { id: 17, name: "Corrente Veneziana 50cm", price: 0.00, category: "correntes", img: "Imagens/correnteveneziana50cm.webp" },
-    { id: 18, name: "Kit 3 Venezianas", price: 0.00, category: "conjuntos", img: "Imagens/kit3venezianas.webp" },
-    { id: 19, name: "Limpa Prata", price: 0.00, category: "acessorios", img: "Imagens/limpaprata.webp" },
-    { id: 20, name: "Pingente Menina", price: 0.00, category: "acessorios", img: "Imagens/pingmenina.webp" },
-    { id: 21, name: "Pingente Menino", price: 0.00, category: "acessorios", img: "Imagens/pingmenino.webp" },
-    { id: 22, name: "Pulseira 3 Borboletas", price: 0.00, category: "pulseiras", img: "Imagens/pulseira3borboletas.webp" },
-    { id: 23, name: "Pulseira 3 Margaridas", price: 0.00, category: "pulseiras", img: "Imagens/pulseira3margaridas.webp" },
-    { id: 24, name: "Pulseira 5 Corações", price: 0.00, category: "pulseiras", img: "Imagens/pulseira5coracoes.webp" },
-    { id: 25, name: "Pulseira Ariana 3", price: 0.00, category: "pulseiras", img: "Imagens/pulseiraariana3.webp" },
-    { id: 26, name: "Pulseira Coração Vazado Ponto Azul", price: 0.00, category: "pulseiras", img: "Imagens/pulseiracoracaovazadopontoazul.webp" },
-    { id: 27, name: "Pulseira Elo Porto", price: 0.00, category: "pulseiras", img: "Imagens/pulseiraeloporto.webp" },
-    { id: 28, name: "Pulseira Fio Torcido", price: 0.00, category: "pulseiras", img: "Imagens/pulseirafiotorcido.webp" },
-    { id: 29, name: "Pulseira Nó", price: 0.00, category: "pulseiras", img: "Imagens/pulseirano.webp" },
-    { id: 30, name: "Pulseira Singapura 3mm", price: 0.00, category: "pulseiras", img: "Imagens/pulseirasingapura3mm.webp" },
-    { id: 31, name: "Pulseira Trança 3 Fios", price: 0.00, category: "pulseiras", img: "Imagens/pulseiratranca3fios.webp" },
-    { id: 32, name: "Pulseira V12 com Bolinha", price: 0.00, category: "pulseiras", img: "Imagens/pulseirav12combolinha.webp" },
-    { id: 33, name: "Tornozeleira Borboleta e Ponto", price: 0.00, category: "tornozeleiras", img: "Imagens/tornoborboletaeponto.webp" },
-    { id: 34, name: "Tornozeleira Borboleta e Ponto Azul", price: 0.00, category: "tornozeleiras", img: "Imagens/tornoborboletaepontoazul.webp" },
-];
-
-// Estado da Aplicação
-let cart = JSON.parse(localStorage.getItem('venusCart')) || [];
-
-// Elementos do DOM
-const grid = document.getElementById('products-grid');
-const cartModal = document.getElementById('cart-modal');
-const cartBtn = document.getElementById('cart-btn');
-const closeCartBtn = document.getElementById('close-cart');
-const cartItemsContainer = document.getElementById('cart-items');
-const cartTotalEl = document.getElementById('cart-total');
-const cartCountEl = document.getElementById('cart-count');
-const filterBtns = document.querySelectorAll('.filter-btn');
-const checkoutBtn = document.getElementById('checkout-btn');
-
-// Inicialização
-function init() {
-    renderProducts(productsData);
-    updateCartUI();
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+/**
+ * Adiciona um produto ao estoque (Firestore) e atualiza o catálogo automaticamente.
+ * @param {{nome:string, preco:number, categoria:string, imagem?:string, estoque:number}} produto
+ */
+async function adicionarProduto(produto) {
+  const produtosRef = collection(db, 'produtos');
+  await addDoc(produtosRef, {
+    ...produto,
+    createdAt: serverTimestamp()
+  });
+  // Atualiza o catálogo após adicionar
+  await loadProductsFromFirestore();
+  setActiveCategory('todos');
 }
 
-// Renderizar Produtos
-function renderProducts(products) {
-    grid.innerHTML = '';
-    products.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        card.innerHTML = `
-            <img src="${product.img}" alt="${product.name}" class="product-img">
-            <div class="product-info">
-                <h3 class="product-title">${product.name}</h3>
-                <p class="product-price">${formatCurrency(product.price)}</p>
-                <button class="btn-add" onclick="addToCart(${product.id})">Adicionar à Sacola</button>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
+// ...existing code...
+
+const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+/** +55 11 97679-2966 — somente dígitos (DDI + DDD + número) para o link do WhatsApp */
+const WHATSAPP_PEDIDO_NUMERO = '5511976792966';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCW99N-Ok683zmhwcTRSAeZ1o5fxLvSs44",
+  authDomain: "pedidos-venus-joias.firebaseapp.com",
+  projectId: "pedidos-venus-joias",
+  storageBucket: "pedidos-venus-joias.firebasestorage.app",
+  messagingSenderId: "504751234156",
+  appId: "1:504751234156:web:dcf8f4c9b416c5d0fa4c49",
+  measurementId: "G-K4RLW60R85"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const els = {
+  grid: document.getElementById('products-grid'),
+  filters: document.getElementById('filters'),
+  menuCategories: document.getElementById('menu-categories'),
+  menuBtn: document.getElementById('menu-btn'),
+  menuModal: document.getElementById('mobile-menu-modal'),
+  closeMenu: document.getElementById('close-menu'),
+  cartBtn: document.getElementById('cart-btn'),
+  cartModal: document.getElementById('cart-modal'),
+  cartItems: document.getElementById('cart-items'),
+  cartCount: document.getElementById('cart-count'),
+  cartTotal: document.getElementById('cart-total'),
+  closeCart: document.getElementById('close-cart'),
+  checkoutBtn: document.getElementById('checkout-btn'),
+  openCartCta: document.getElementById('open-cart-cta'),
+};
+
+/** @type {Array<{id:string,nome:string,preco:number,categoria:string,imagem?:string,estoque:number}>} */
+let PRODUCTS = [];
+let activeCategory = 'todos';
+
+/** @type {Map<string, {id:string,nome:string,preco:number,categoria:string,imagem?:string,estoque:number,qtd:number}>} */
+const cart = new Map();
+
+function normalizeCategory(cat) {
+  const c = String(cat || '').trim().toLowerCase();
+  if (!c) return 'itens';
+  return c
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '_');
 }
 
-// Adicionar ao Carrinho
-window.addToCart = (id) => {
-    const product = productsData.find(p => p.id === id);
-    const existingItem = cart.find(item => item.id === id);
+function labelCategoria(cat) {
+  switch (cat) {
+    case 'pulseiras': return 'Pulseiras';
+    case 'colares': return 'Colares';
+    case 'brincos': return 'Brincos';
+    case 'conjuntos': return 'Conjuntos';
+    case 'correntes': return 'Correntes';
+    case 'tornozeleiras': return 'Tornozeleiras';
+    case 'acessorios': return 'Acessórios';
+    case 'itens': return 'Itens';
+    default: return cat.charAt(0).toUpperCase() + cat.slice(1);
+  }
+}
 
-    if (existingItem) {
-        existingItem.quantity++;
-    } else {
-        cart.push({ ...product, quantity: 1 });
+function getCategoriesFromProducts() {
+  const set = new Set(PRODUCTS.map(p => p.categoria).filter(Boolean));
+  return ['todos', ...[...set].sort((a, b) => labelCategoria(a).localeCompare(labelCategoria(b), 'pt-BR'))];
+}
+
+function renderCategoryButtons() {
+  const cats = getCategoriesFromProducts();
+
+  if (els.filters) {
+    els.filters.innerHTML = cats.map(cat => `
+      <button class="filter-btn ${cat === activeCategory ? 'active' : ''}" data-cat="${cat}">
+        ${cat === 'todos' ? 'Todos' : escapeHtml(labelCategoria(cat))}
+      </button>
+    `).join('');
+  }
+
+  if (els.menuCategories) {
+    els.menuCategories.innerHTML = cats.map(cat => `
+      <button class="menu-filter-btn ${cat === activeCategory ? 'active' : ''}" data-cat="${cat}">
+        ${cat === 'todos' ? 'Todos' : escapeHtml(labelCategoria(cat))}
+      </button>
+    `).join('');
+  }
+}
+
+function setActiveCategory(cat) {
+  activeCategory = cat || 'todos';
+  renderCategoryButtons();
+  renderProducts(activeCategory);
+}
+
+function renderProducts(category = 'todos') {
+  const list = category === 'todos'
+    ? PRODUCTS
+    : PRODUCTS.filter(p => p.categoria === category);
+
+  if (!list.length) {
+    els.grid.innerHTML = `
+      <div style="grid-column:1/-1; color:#6a6661; padding: 18px; border: 1px dashed rgba(31,31,31,0.18); border-radius: 16px;">
+        Nenhum produto cadastrado nessa categoria.
+      </div>
+    `;
+    return;
+  }
+
+  els.grid.innerHTML = list.map(p => {
+    const disponivel = (p.estoque ?? 0) > 0;
+    return `
+    <article class="product-card" data-id="${p.id}">
+      <img class="product-img" src="${p.imagem || ''}" alt="${escapeHtml(p.nome)}" loading="lazy">
+      <div class="product-info">
+        <div>
+          <div class="product-title">${escapeHtml(p.nome)}</div>
+          <div class="product-meta">
+            <div class="product-cat">${escapeHtml(labelCategoria(p.categoria))}</div>
+            <div class="product-price">${BRL.format(p.preco)}</div>
+          </div>
+          <div style="margin-top:10px;">
+            ${disponivel
+              ? `<span class="stock-badge">Em estoque: ${p.estoque}</span>`
+              : `<span class="stock-badge out">Esgotado</span>`
+            }
+          </div>
+        </div>
+        <button class="btn-add" ${disponivel ? `data-add="${p.id}"` : 'disabled'}>${disponivel ? 'Adicionar à sacola' : 'Indisponível'}</button>
+      </div>
+    </article>
+  `;
+  }).join('');
+}
+
+function openCart() { els.cartModal.classList.add('open'); }
+function closeCart() { els.cartModal.classList.remove('open'); }
+
+function openMenu() {
+  if (!els.menuModal) return;
+  els.menuModal.classList.add('open');
+  els.menuModal.setAttribute('aria-hidden', 'false');
+  els.menuBtn?.setAttribute('aria-expanded', 'true');
+}
+function closeMenu() {
+  if (!els.menuModal) return;
+  els.menuModal.classList.remove('open');
+  els.menuModal.setAttribute('aria-hidden', 'true');
+  els.menuBtn?.setAttribute('aria-expanded', 'false');
+}
+
+function addToCart(productId) {
+  const p = PRODUCTS.find(x => x.id === productId);
+  if (!p) return;
+  if ((p.estoque ?? 0) <= 0) return;
+  const existing = cart.get(productId);
+  if (existing) {
+    if (existing.qtd >= (existing.estoque ?? 0)) return;
+    existing.qtd += 1;
+  } else {
+    cart.set(productId, { ...p, qtd: 1 });
+  }
+  renderCart();
+  openCart();
+}
+
+function inc(productId) {
+  const item = cart.get(productId);
+  if (!item) return;
+  if (item.qtd >= (item.estoque ?? 0)) return;
+  item.qtd += 1;
+  renderCart();
+}
+
+function dec(productId) {
+  const item = cart.get(productId);
+  if (!item) return;
+  item.qtd -= 1;
+  if (item.qtd <= 0) cart.delete(productId);
+  renderCart();
+}
+
+function remove(productId) {
+  cart.delete(productId);
+  renderCart();
+}
+
+function getTotals() {
+  const items = [...cart.values()];
+  const count = items.reduce((acc, i) => acc + i.qtd, 0);
+  const total = items.reduce((acc, i) => acc + i.qtd * i.preco, 0);
+  return { count, total, items };
+}
+
+function renderCart() {
+  const { count, total, items } = getTotals();
+  els.cartCount.textContent = String(count);
+  els.cartTotal.textContent = BRL.format(total);
+
+  if (!items.length) {
+    els.cartItems.innerHTML = `
+      <div style="color:#6a6661; padding: 18px; border: 1px dashed rgba(31,31,31,0.18); border-radius: 16px;">
+        Sua sacola está vazia. Adicione uma joia para continuar.
+      </div>
+    `;
+    return;
+  }
+
+  els.cartItems.innerHTML = items.map(i => `
+    <div class="cart-item" data-id="${i.id}">
+      <div>
+        <strong>${escapeHtml(i.nome)}</strong>
+        <small>${escapeHtml(labelCategoria(i.categoria))} • ${BRL.format(i.preco)}${(i.estoque ?? 0) ? ` • estoque: ${i.estoque}` : ''}</small>
+        <div style="margin-top:10px;" class="qty-controls">
+          <button class="qty-btn" data-dec="${i.id}" aria-label="Diminuir quantidade">−</button>
+          <strong>${i.qtd}</strong>
+          <button class="qty-btn" data-inc="${i.id}" aria-label="Aumentar quantidade" ${(i.qtd >= (i.estoque ?? 0)) ? 'disabled' : ''}>+</button>
+        </div>
+      </div>
+      <div style="display:grid; gap:10px; justify-items:end; align-content:start;">
+        <strong>${BRL.format(i.qtd * i.preco)}</strong>
+        <button class="remove-btn" data-rm="${i.id}" aria-label="Remover item">Remover</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildWhatsAppMessage() {
+  const { items, total } = getTotals();
+  const lines = [];
+  lines.push('*Vênus Joias — Pedido via site*');
+  lines.push('');
+  items.forEach(i => {
+    lines.push(`• ${i.qtd}x ${i.nome} — ${BRL.format(i.qtd * i.preco)}`);
+  });
+  lines.push('');
+  lines.push(`*Total:* ${BRL.format(total)}`);
+  lines.push('');
+  lines.push('Olá! Gostaria de finalizar esse pedido.');
+  return lines.join('\n');
+}
+
+function checkoutWhatsApp() {
+  const { items } = getTotals();
+  if (!items.length) return;
+  const text = buildWhatsAppMessage();
+  const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_PEDIDO_NUMERO}&text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function docMillis(data) {
+  const c = data?.createdAt;
+  if (!c) return 0;
+  try {
+    return typeof c.toMillis === 'function' ? c.toMillis() : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function loadProductsFromFirestore() {
+  const produtosRef = collection(db, 'produtos');
+  let snapshots;
+  try {
+    const snapOrdered = await getDocs(query(produtosRef, orderBy('createdAt', 'desc')));
+    snapshots = snapOrdered.docs;
+  } catch (e1) {
+    console.warn('[catálogo] query ordenada falhou, tentando leitura simples:', e1?.message || e1);
+    try {
+      const snapAll = await getDocs(produtosRef);
+      snapshots = [...snapAll.docs].sort(
+        (a, b) => docMillis(b.data()) - docMillis(a.data()),
+      );
+    } catch (e2) {
+      console.error('[catálogo] Firestore:', e2);
+      throw e2;
     }
+  }
 
-    updateCartUI();
-    saveCart();
-    // Feedback visual simples
-    alert('Produto adicionado!'); 
-};
-
-// Remover do Carrinho
-window.removeFromCart = (id) => {
-    cart = cart.filter(item => item.id !== id);
-    updateCartUI();
-    saveCart();
-};
-
-// Atualizar UI do Carrinho
-function updateCartUI() {
-    cartItemsContainer.innerHTML = '';
-    let total = 0;
-    let count = 0;
-
-    cart.forEach(item => {
-        total += item.price * item.quantity;
-        count += item.quantity;
-
-        const itemEl = document.createElement('div');
-        itemEl.className = 'cart-item';
-        itemEl.innerHTML = `
-            <div>
-                <h4>${item.name}</h4>
-                <p>${item.quantity}x ${formatCurrency(item.price)}</p>
-            </div>
-            <button onclick="removeFromCart(${item.id})" style="border:none; background:none; color:red; cursor:pointer;">&times;</button>
-        `;
-        cartItemsContainer.appendChild(itemEl);
-    });
-
-    cartTotalEl.innerText = formatCurrency(total);
-    cartCountEl.innerText = count;
+  PRODUCTS = snapshots.map(d => {
+    const data = d.data() || {};
+    const nome = String(data.descricao || '').trim();
+    const preco = Number(data.precoFinal ?? 0);
+    const categoria = normalizeCategory(data.categoria || 'itens');
+    const imagem = data.foto || '';
+    const estoque = parseInt(data.estoque ?? 0, 10) || 0;
+    return {
+      id: d.id,
+      nome: nome || 'Produto',
+      preco: isFinite(preco) ? preco : 0,
+      categoria,
+      imagem,
+      estoque,
+    };
+  }).filter(p => p.preco > 0);
 }
 
-// Salvar no LocalStorage
-function saveCart() {
-    localStorage.setItem('venusCart', JSON.stringify(cart));
+function wireEvents() {
+  els.grid.addEventListener('click', (e) => {
+    const target = /** @type {HTMLElement} */ (e.target);
+    const id = target?.getAttribute?.('data-add');
+    if (id) addToCart(id);
+  });
+
+  els.filters?.addEventListener('click', (e) => {
+    const target = /** @type {HTMLElement} */ (e.target);
+    const cat = target?.getAttribute?.('data-cat');
+    if (cat) setActiveCategory(cat);
+  });
+
+  els.menuCategories?.addEventListener('click', (e) => {
+    const target = /** @type {HTMLElement} */ (e.target);
+    const cat = target?.getAttribute?.('data-cat');
+    if (cat) {
+      setActiveCategory(cat);
+      closeMenu();
+    }
+  });
+
+  els.menuBtn?.addEventListener('click', openMenu);
+  els.closeMenu?.addEventListener('click', closeMenu);
+  els.menuModal?.addEventListener('click', (e) => {
+    if (e.target === els.menuModal) closeMenu();
+  });
+
+  els.cartBtn.addEventListener('click', openCart);
+  els.openCartCta?.addEventListener('click', openCart);
+  els.closeCart.addEventListener('click', closeCart);
+  els.cartModal.addEventListener('click', (e) => {
+    if (e.target === els.cartModal) closeCart();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeCart();
+      closeMenu();
+    }
+  });
+
+  els.cartItems.addEventListener('click', (e) => {
+    const target = /** @type {HTMLElement} */ (e.target);
+    const incId = target?.getAttribute?.('data-inc');
+    const decId = target?.getAttribute?.('data-dec');
+    const rmId = target?.getAttribute?.('data-rm');
+    if (incId) return inc(incId);
+    if (decId) return dec(decId);
+    if (rmId) return remove(rmId);
+  });
+
+  els.checkoutBtn.addEventListener('click', checkoutWhatsApp);
 }
 
-// Formatar Moeda
-function formatCurrency(value) {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+async function init() {
+  if (!els.grid) return;
+  wireEvents();
+  renderCart();
+
+  // Se as regras do Firestore exigirem usuário autenticado para leitura,
+  // tentamos login anônimo para permitir o carregamento do catálogo.
+  try {
+    await signInAnonymously(auth);
+  } catch {
+    // Se falhar, seguimos mesmo assim (pode ser que as regras permitam leitura pública).
+  }
+
+  try {
+    await loadProductsFromFirestore();
+    setActiveCategory('todos');
+  } catch (e) {
+    const code = e?.code || '';
+    const permissao =
+      code === 'permission-denied' ||
+      String(e?.message || '').toLowerCase().includes('permission');
+    console.error('[catálogo] erro ao inicializar:', e);
+    els.grid.innerHTML = `
+      <div style="grid-column:1/-1; color:#6a6661; padding: 18px; border: 1px dashed rgba(31,31,31,0.18); border-radius: 16px;">
+        Não foi possível carregar o catálogo no momento.${permissao ? `
+          <p style="margin-top:12px; font-size:0.92rem;">
+            Se isso aparece só na Vercel: no <strong>Firebase Console</strong> → Authentication → <em>Authorized domains</em>,
+            inclua seu domínio (<code>.vercel.app</code> ou domínio próprio).
+            Confira também em Sign-in method se o login <strong>Anônimo</strong> está ativo e se as <strong>regras do Firestore</strong> permitem leitura da coleção <code>produtos</code> para visitantes/auth anônimo.
+          </p>` : ''}
+      </div>
+    `;
+  }
 }
 
-// Filtros
-filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        // Remove active class de todos
-        filterBtns.forEach(b => b.classList.remove('active'));
-        // Adiciona ao clicado
-        btn.classList.add('active');
-        
-        const category = btn.getAttribute('data-cat');
-        if (category === 'todos') {
-            renderProducts(productsData);
-        } else {
-            const filtered = productsData.filter(p => p.category === category);
-            renderProducts(filtered);
-        }
-    });
-});
-
-// Modal Logica
-cartBtn.addEventListener('click', () => cartModal.classList.add('open'));
-closeCartBtn.addEventListener('click', () => cartModal.classList.remove('open'));
-
-// Finalizar no WhatsApp
-checkoutBtn.addEventListener('click', () => {
-    if (cart.length === 0) return alert('Seu carrinho está vazio!');
-
-    let message = "Olá! Gostaria de finalizar meu pedido na Vênus Joias:\n\n";
-    cart.forEach(item => {
-        message += `- ${item.name} (${item.quantity}x)\n`;
-    });
-    
-    // Calcula o total limpo para a mensagem
-    const totalValue = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    message += `\n*Total: ${formatCurrency(totalValue)}*`;
-
-    // Codifica a mensagem para URL
-    const encodedMessage = encodeURIComponent(message);
-    const phone = "5511999999999"; // COLOQUE SEU NÚMERO AQUI
-    
-    window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
-});
-
-// Iniciar
 init();
+

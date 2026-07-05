@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>B7 SDR — Agenda & Roteamento</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <strong>B7 SDR</strong>
+          <span>Agenda & Roteamento</span>
+        </div>
+        <nav class="nav">
+          <button class="nav__btn is-active" data-route="dashboard" type="button">Dashboard</button>
+          <button class="nav__btn" dazzzzta-route="agenda" type="button">Agenda</button>
+          <button class="nav__btn" data-route="metas" type="button">Metas</button>
+        </nav>
+        <div class="sidebar__foot muted" id="weekLabel"></div>
+      </aside>
+
+      <main class="main">
+        <header class="header">
+          <div>
+            <h1 id="pageTitle">Dashboard</h1>
+            <p class="muted" id="pageSub">Resultados da semana</p>
+          </div>
+          <div class="header__actions">
+            <button class="btn" id="prevWeek" type="button">← Semana</button>
+            <button class="btn" id="thisWeek" type="button">Esta semana</button>
+            <button class="btn" id="nextWeek" type="button">Semana →</button>
+          </div>
+        </header>
+        <section class="content" id="view"></section>
+      </main>
+    </div>
+
+    <dialog class="modal" id="modal">
+      <form method="dialog" class="modal__box">
+        <div class="modal__head">
+          <h2 id="modalTitle"></h2>
+          <button class="btn btn--icon" value="cancel" type="submit">✕</button>
+        </div>
+        <div class="modal__body" id="modalBody"></div>
+        <div class="modal__foot">
+          <button class="btn" value="cancel" type="submit">Cancelar</button>
+          <button class="btn btn--primary" id="modalSave" value="default" type="submit">Salvar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="tplDashboard">
+      <div class="goals" id="goalsGrid"></div>
+
+      <div class="grid2">
+        <article class="card">
+          <h3>Semana atual</h3>
+          <div class="stats" id="weekStats"></div>
+        </article>
+        <article class="card">
+          <h3>Comissão (0,75%)</h3>
+          <div class="stats" id="commissionStats"></div>
+        </article>
+      </div>
+
+      <article class="card">
+        <h3>Performance por closer</h3>
+        <div class="table-wrap">
+          <table class="table" id="closerTable">
+            <thead>
+              <tr>
+                <th>Closer</th>
+                <th>Agendadas</th>
+                <th>Realizadas</th>
+                <th>No-show</th>
+                <th>Vendas</th>
+                <th>Conversão</th>
+                <th>Vendas (R$)</th>
+                <th>Meta R$60k</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </article>
+    </template>
+
+    <template id="tplAgenda">
+      <div class="toolbar">
+        <button class="btn btn--primary" id="newMeetingBtn" type="button">+ Agendar reunião</button>
+        <input id="meetingSearch" type="search" placeholder="Buscar por nome ou e-mail…" />
+        <select id="filterCloser">
+          <option value="">Todos os closers</option>
+        </select>
+      </div>
+      <div class="days" id="agendaDays"></div>
+    </template>
+
+    <template id="tplMetas">
+      <article class="card">
+        <h3>Metas da liderança</h3>
+        <p class="muted">Ajuste quando a liderança alterar as metas. O dashboard usa estes valores.</p>
+        <form class="form" id="goalsForm"></form>
+        <button class="btn btn--primary" id="saveGoalsBtn" type="button">Salvar metas</button>
+      </article>
+      <article class="card">
+        <h3>Closers (10)</h3>
+        <p class="muted">Edite nomes se necessário. O roteamento usa esta lista.</p>
+        <div class="table-wrap">
+          <table class="table" id="closersConfigTable">
+            <thead>
+              <tr><th>Nome</th><th>Ativo</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button class="btn" id="addCloserBtn" type="button">+ Closer</button>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

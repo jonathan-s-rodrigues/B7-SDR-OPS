@@ -4,63 +4,68 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gold Stone Marmoraria | Alto Padrão</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <div class="site-grain" aria-hidden="true"></div>
+
     <header>
         <div class="logo">
-            <img src="Imagens/goldstone.png" alt="Gold Stone" />
-            <span>GOLD STONE</span>
+            <img src="Imagens/goldstone.png" alt="Gold Stone Marmoraria" />
+            <div class="logo-text">
+                <span class="logo-title">GOLD STONE</span>
+                <span class="logo-sub">MARMORARIA</span>
+            </div>
         </div>
 
         <button class="hamburger" aria-label="Abrir menu" aria-expanded="false" type="button">
             <span></span>
             <span></span>
             <span></span>
-        </button>
+        </button>   
 
         <nav>
-            <a href="#catalogo">Pedras</a>
+            <a href="#catalogo">Catálogo</a>
             <a href="https://wa.me/5511958402011" class="btn-contato">Orçamento</a>
+            <a href="" class="nav-instagram" id="instagramNav" target="_blank" rel="noopener noreferrer" aria-label="Instagram Gold Stone">
+                <i class="fab fa-instagram" aria-hidden="true"></i>
+                <span>Instagram</span>
+            </a>
         </nav>
     </header>
 
-    <section class="hero">
+    <section class="hero" aria-label="Apresentação">
+        <div class="hero-slides" id="heroSlides" aria-hidden="true"></div>
+        <div class="hero-vignette"></div>
+        <div class="hero-gold-sweep" aria-hidden="true"></div>
         <div class="hero-content">
-            <h1>Realizando Sonhos, <br><span>Esculpindo Excelência</span></h1>
-            <p>Especializada em projetos de alto padrão em mármores e granitos.</p>
-            <a href="https://wa.me/5511958402011" class="cta-button">Falar com Especialista</a>
+            <p class="hero-eyebrow">Pedras naturais &amp; alto padrão</p>
+            <h1>Realizando sonhos, <br><span class="gold-text">esculpindo excelência</span></h1>
+            <p class="hero-lead">Projetos exclusivos em mármores e granitos, com acabamento que valoriza cada ambiente.</p>
+            <div class="hero-actions">
+                <a href="https://wa.me/5511958402011" class="cta-button cta-primary">Falar com especialista</a>
+                <a href="#catalogo" class="cta-button cta-ghost">Ver catálogo</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="intro-strip">
+        <div class="intro-inner">
+            <span class="intro-icon" aria-hidden="true"><i class="fas fa-gem"></i></span>
+            <p>Do projeto à instalação — precisão, materiais selecionados e o brilho do ouro em cada detalhe.</p>
         </div>
     </section>
 
     <section id="catalogo" class="gallery">
-        <h2>Nosso Catálogo Especial</h2>
-        <p>Explore os detalhes das nossas pedras exclusivas.</p>
-
-        <div class="filters">
-            <div class="filter-group">
-                <label for="modelFilter">Modelo</label>
-                <select id="modelFilter">
-                    <option value="all">Todos</option>
-                    <option value="pia">Pia</option>
-                    <option value="lavatório">Lavatório</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
-                <label for="stoneTypeFilter">Tipo de Pedra</label>
-                <select id="stoneTypeFilter">
-                    <option value="all">Todos</option>
-                    <option value="mármore">Mármore</option>
-                    <option value="granito">Granito</option>
-                    <option value="quartzo">Quartzo</option>
-                    <option value="outros">Outros</option>
-                </select>
-            </div>
+        <div class="section-head">
+            <h2>Catálogo especial</h2>
+            <p class="section-sub">Toque em uma coleção para navegar com transição suave entre as fotos — assinatura Gold Stone.</p>
         </div>
-
         <div class="grid" id="catalogGrid"></div>
     </section>
 
@@ -69,18 +74,41 @@
         <div class="modal-content">
             <button class="modal-close" type="button" aria-label="Fechar">×</button>
             <button class="modal-nav modal-prev" type="button" aria-label="Anterior">‹</button>
-            <img id="modalImage" src="" alt="">
+            <div class="modal-image-stack">
+                <img class="modal-layer is-visible" id="modalLayerA" src="" alt="">
+                <img class="modal-layer" id="modalLayerB" src="" alt="">
+            </div>
             <button class="modal-nav modal-next" type="button" aria-label="Próxima">›</button>
+            <div class="modal-progress" id="modalProgress" aria-hidden="true"></div>
             <div class="modal-caption" id="modalCaption"></div>
         </div>
     </div>
 
-    <a href="https://wa.me/5511958402011" class="whatsapp-float" target="_blank">
-        <i class="fab fa-whatsapp"></i>
-    </a>
+    <div class="social-float-stack" aria-label="Contato rápido">
+        <a href="" class="social-float instagram-float" id="instagramFloat" target="_blank" rel="noopener noreferrer" aria-label="Instagram Gold Stone Marmoraria">
+            <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://wa.me/5511958402011" class="social-float whatsapp-float" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Gold Stone">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+    </div>
 
     <footer>
-        <p>&copy; 2026 Gold Stone Marmoraria. Todos os direitos reservados.</p>
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <img src="Imagens/goldstone.png" alt="" width="48" height="48" class="footer-logo">
+                <div>
+                    <strong>Gold Stone Marmoraria</strong>
+                    <p>Exclusividade em pedras naturais.</p>
+                </div>
+            </div>
+            <div class="footer-links">
+                <a href="https://wa.me/5511958402011" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                <a href="" id="instagramFooter" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a href="#catalogo">Catálogo</a>
+            </div>
+        </div>
+        <p class="footer-copy">&copy; 2026 Gold Stone Marmoraria. Todos os direitos reservados.</p>
     </footer>
 
     <script src="script.js"></script>
