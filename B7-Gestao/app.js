@@ -21,33 +21,27 @@ const db = firebase.firestore();
 // 2. DADOS FIXOS DO NEGÓCIO (B7 BUSINESS)
 // ==========================================
 const CLOSERS_B7 = [
-    "Alexandre Closer", "Beatriz Closer", "Carlos Closer", "Daniela Closer", 
-    "Eduardo Closer", "Fernanda Closer", "Gabriel Closer", "Helena Closer", 
-    "Igor Closer", "Julia Closer"
+    "Ana", "Matheus Charles", "Matheus Angelo", "Manuella Soares", "Manuela Barbosa", "Junior", "Gustavo"
 ];
 
 const PRODUTOS_B7 = [
-    { nome: "MBA Investments & Asset Allocation", valor: 18000 },
-    { nome: "MBA Wealth Management", valor: 20000 },
-    { nome: "MBA Business & Financial Services", valor: 16000 },
-    { nome: "MBA Middle Market & Corporate Banking", valor: 22000 },
-    { nome: "MBA Private Banking & Offshore", valor: 25000 },
-    { nome: "Formação Especialista em Investimentos", valor: 8000 },
-    { nome: "Formação PJ", valor: 7500 }
+    { nome: "MBA Investments & Asset Allocation", valor: 17997 },
+    { nome: "MBA Wealth Management", valor: 29997 },
+    { nome: "MBA Business & Financial Services", valor: 14997 },
+    { nome: "MBA Middle Market & Corporate Banking", valor: 29997},
+    { nome: "MBA Private Banking & Offshore", valor: 70000 },
+    { nome: "Formação Especialista em Investimentos", valor: 9997},
+    { nome: "Formação Gerente PJ", valor: 9997 }
 ];
 
 let listaReunioes = [];
-let bonusAcumulado = 0;
+let listaBonus = []; // Agora armazena objetos com {id, desc, val}
 
 // ==========================================
 // 3. AUTENTICAÇÃO EM NUVEM (AUTH)
 // ==========================================
-// ==========================================
-// 3. AUTENTICAÇÃO EM NUVEM (AUTH) - BLINDADO
-// ==========================================
 auth.onAuthStateChanged((user) => {
     if (user) {
-        // Se já detectou que está logado, fecha a tela imediatamente
         abrirSistema(user);
     } else {
         document.getElementById('login-overlay').style.display = 'flex';
@@ -56,22 +50,18 @@ auth.onAuthStateChanged((user) => {
 });
 
 function abrirSistema(user) {
-    // 1. Força a tela de login a sumir
     document.getElementById('login-overlay').style.display = 'none';
     document.getElementById('app-container').style.display = 'flex';
     
-    // 2. Coloca o nome do usuário na barra lateral
     if (user && user.email) {
         document.getElementById('user-display-name').innerText = user.email.split('@')[0].toUpperCase();
     }
     
-    // 3. Tenta conectar ao banco com proteção (Se der erro no Firestore, o app não trava)
     try {
         iniciarSyncNuvem();
         carregarBonus();
     } catch (erro) {
         console.error("Erro ao sincronizar com Firestore:", erro);
-        alert("Você está conectada, mas houve um problema ao ler o banco de dados. Verifique o Passo 1 das Regras no Firebase!");
     }
 }
 
@@ -85,13 +75,11 @@ function realizarLogin(e) {
     
     auth.signInWithEmailAndPassword(email, pass)
         .then((credencial) => {
-            // Sucesso no login! Força a abertura do sistema imediatamente
             abrirSistema(credencial.user);
         })
         .catch(error => {
             errDiv.style.display = 'block';
             errDiv.innerText = "Erro ao entrar: Verifique seu e-mail e senha.";
-            console.error("Detalhe do erro:", error);
         });
 }
 
@@ -103,31 +91,106 @@ function realizarLogout() {
 // 4. BANCO DE DADOS EM TEMPO REAL (FIRESTORE)
 // ==========================================
 function iniciarSyncNuvem() {
-    // Sincroniza reuniões em tempo real para as 2 SDRs
     db.collection("reunioes_b7").onSnapshot((snapshot) => {
         listaReunioes = [];
         snapshot.forEach((doc) => {
             listaReunioes.push({ id: doc.id, ...doc.data() });
         });
-        
         renderizarTudo();
     });
 }
 
 function carregarBonus() {
-    db.collection("config_sdr").doc("premiacoes").get().then((doc) => {
-        if (doc.exists && doc.data().valor) {
-            bonusAcumulado = parseFloat(doc.data().valor);
-        } else {
-            bonusAcumulado = 0;
-        }
-        atualizarUIBonus();
+    db.collection("bonus_sdr").onSnapshot((snapshot) => {
+        listaBonus = [];
+        let total = 0;
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            listaBonus.push({ id: doc.id, desc: data.desc, val: data.val });
+            total += parseFloat(data.val || 0);
+        });
+        atualizarUIBonus(total);
         calcularDashboard();
     });
 }
 
 // ==========================================
-// 5. ROTEAMENTO INTELIGENTE DE CLOSERS
+// 5. CONTROLE DOS MODAIS (AGENDAMENTO & BÔNUS)
+// ==========================================
+function abrirModalReuniao(isEdicao = false) {
+    document.getElementById('modal-reuniao-title').innerText = isEdicao ? "Editar Reunião" : "Novo Agendamento";
+    if (!isEdicao) {
+        limparFormReuniao();
+        document.getElementById('reuniao-data').value = new Date().toISOString().split('T')[0];
+    }
+    renderizarProdutos();
+    calcularRoteamentoInteligente();
+    document.getElementById('modal-reuniao').style.display = 'flex';
+}
+
+function fecharModalReuniao() {
+    document.getElementById('modal-reuniao').style.display = 'none';
+    limparFormReuniao();
+}
+
+function abrirModalBonus() {
+    renderizarListaBonusModal();
+    document.getElementById('modal-bonus').style.display = 'flex';
+}
+
+function fecharModalBonus() {
+    document.getElementById('modal-bonus').style.display = 'none';
+}
+
+function adicionarBonus(e) {
+    e.preventDefault();
+    const desc = document.getElementById('novo-bonus-desc').value.trim();
+    const val = parseFloat(document.getElementById('novo-bonus-val').value);
+    
+    if (desc && val) {
+        db.collection("bonus_sdr").add({ desc: desc, val: val }).then(() => {
+            document.getElementById('novo-bonus-desc').value = "";
+            document.getElementById('novo-bonus-val').value = "";
+        });
+    }
+}
+
+function removerBonus(id) {
+    db.collection("bonus_sdr").doc(id).delete();
+}
+
+function renderizarListaBonusModal() {
+    const container = document.getElementById('lista-bonus-container');
+    container.innerHTML = "";
+    
+    let total = 0;
+    
+    if (listaBonus.length === 0) {
+        container.innerHTML = `<span class="text-muted text-center text-sm" style="padding: 15px;">Nenhum bônus ativo cadastrado.</span>`;
+    } else {
+        listaBonus.forEach(b => {
+            total += b.val;
+            container.innerHTML += `
+                <div class="bonus-item">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-main);">${b.desc}</div>
+                        <div style="font-size: 0.75rem; color: var(--success-light);">R$ ${b.val.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
+                    </div>
+                    <button type="button" class="btn-icon del" onclick="removerBonus('${b.id}')">🗑️</button>
+                </div>
+            `;
+        });
+    }
+    
+    document.getElementById('modal-bonus-total-preview').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+}
+
+function atualizarUIBonus(totalVal) {
+    document.getElementById('val-bonus-display').innerText = totalVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
+// ==========================================
+// 6. ROTEAMENTO INTELIGENTE DE CLOSERS
 // ==========================================
 function calcularRoteamentoInteligente() {
     const dataSelecionada = document.getElementById('reuniao-data').value || new Date().toISOString().split('T')[0];
@@ -139,23 +202,19 @@ function calcularRoteamentoInteligente() {
 
         listaReunioes.forEach(r => {
             if (r.closer === closerNome) {
-                // Conta vendas convertidas no mês
                 if (r.status === "Venda feita" && getDatesInfo(r.dataVenda || r.data).isMes) {
                     vendasConvertidas++;
                 }
-                // Conta carga de reuniões agendadas na mesma semana do agendamento
                 if (r.status !== "Cancelada" && getDatesInfo(r.data).isSemana === infoData.isSemana) {
                     agendamentosNaSemana++;
                 }
             }
         });
 
-        // FÓRMULA DO ROTEAMENTO: (Vendas * 10) - (Carga na Semana * 2)
         const scoreFinal = (vendasConvertidas * 10) - (agendamentosNaSemana * 2);
         return { nome: closerNome, score: scoreFinal, vendas: vendasConvertidas, carga: agendamentosNaSemana };
     });
 
-    // Ordena do maior score (melhor opção) para o menor
     scores.sort((a, b) => b.score - a.score);
     
     const select = document.getElementById('reuniao-closer');
@@ -174,13 +233,16 @@ function calcularRoteamentoInteligente() {
 }
 
 // ==========================================
-// 6. INTERFACE E CONTROLES DE FORMULÁRIO
+// 7. INTERFACE E CONTROLES GERAIS
 // ==========================================
 function renderizarTudo() {
     renderizarProdutos();
     calcularRoteamentoInteligente();
     renderizarTabela();
     calcularDashboard();
+    if (document.getElementById('modal-bonus').style.display === 'flex') {
+        renderizarListaBonusModal();
+    }
 }
 
 function switchView(viewName, element) {
@@ -223,7 +285,7 @@ function atualizarValorProduto() {
 }
 
 // ==========================================
-// 7. CRUD DE REUNIÕES (FIREBASE STORE)
+// 8. CRUD DE REUNIÕES (FIREBASE STORE)
 // ==========================================
 function salvarReuniao(e) {
     e.preventDefault();
@@ -231,6 +293,7 @@ function salvarReuniao(e) {
     
     const dadosReuniao = {
         leadNome: document.getElementById('lead-nome').value.trim(),
+        leadEmail: document.getElementById('lead-email').value.trim(),
         leadTemp: document.getElementById('lead-temp').value,
         data: document.getElementById('reuniao-data').value,
         closer: document.getElementById('reuniao-closer').value,
@@ -247,26 +310,27 @@ function salvarReuniao(e) {
         db.collection("reunioes_b7").add(dadosReuniao);
     }
 
-    limparFormReuniao();
+    fecharModalReuniao();
 }
 
 function editarReuniao(id) {
     const r = listaReunioes.find(item => item.id === id);
     if (!r) return;
 
+    abrirModalReuniao(true);
+    
     document.getElementById('reuniao-id').value = r.id;
-    document.getElementById('lead-nome').value = r.leadNome;
+    document.getElementById('lead-nome').value = r.leadNome || "";
+    document.getElementById('lead-email').value = r.leadEmail || "";
     document.getElementById('lead-temp').value = r.leadTemp || "Morno";
-    document.getElementById('reuniao-data').value = r.data;
-    document.getElementById('reuniao-closer').value = r.closer;
-    document.getElementById('reuniao-produto').value = r.produto;
-    document.getElementById('reuniao-valor').value = r.valor;
-    document.getElementById('reuniao-status').value = r.status;
+    document.getElementById('reuniao-data').value = r.data || "";
+    document.getElementById('reuniao-closer').value = r.closer || "";
+    document.getElementById('reuniao-produto').value = r.produto || "";
+    document.getElementById('reuniao-valor').value = r.valor || 0;
+    document.getElementById('reuniao-status').value = r.status || "Agendada";
     
     toggleDataVenda();
     if (r.dataVenda) document.getElementById('venda-data').value = r.dataVenda;
-    
-    document.querySelector('.form-panel').scrollIntoView({ behavior: 'smooth' });
 }
 
 function deletarReuniao(id) {
@@ -279,7 +343,6 @@ function limparFormReuniao() {
     document.getElementById('form-reuniao').reset();
     document.getElementById('reuniao-id').value = "";
     toggleDataVenda();
-    calcularRoteamentoInteligente();
 }
 
 function renderizarTabela() {
@@ -290,7 +353,7 @@ function renderizarTabela() {
     document.getElementById('total-registros').innerText = `${sorted.length} registros`;
 
     if (sorted.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted" style="padding:40px;">Nenhum lead cadastrado. Adicione no formulário ao lado!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted" style="padding:40px;">Nenhuma reunião agendada. Clique em "+ Novo Agendamento" para começar!</td></tr>`;
         return;
     }
 
@@ -298,19 +361,26 @@ function renderizarTabela() {
         const dataCall = r.data ? r.data.split('-').reverse().join('/') : '-';
         const dataVd = r.dataVenda ? r.dataVenda.split('-').reverse().join('/') : '—';
         const valFmt = (r.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        const emailExibido = r.leadEmail || "Sem e-mail cadastrado";
         
         tbody.innerHTML += `
             <tr>
                 <td>
-                    <div style="font-weight:600;">${r.leadNome}</div>
-                    <div><span class="tag-temp temp-${r.leadTemp}">${r.leadTemp || 'Morno'}</span></div>
+                    <div style="font-weight:600; font-size: 0.9rem; color: var(--text-main);">${r.leadNome}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">${emailExibido}</div>
                 </td>
+                <td><span class="tag-temp temp-${r.leadTemp}">${r.leadTemp || 'Morno'}</span></td>
                 <td style="font-weight:500;">${dataCall}</td>
-                <td><span style="background:var(--bg-app); padding:4px 8px; border-radius:6px; border:1px solid var(--border); font-size:0.75rem;">👤 ${r.closer}</span></td>
+                
+                <!-- NOVO VISUAL DO CLOSER: Limpo, sem caixa preta e com ícone destacado -->
                 <td>
-                    <div style="font-size:0.8rem; color:var(--text-main);">${r.produto}</div>
-                    <div style="font-size:0.75rem; color:var(--accent);">R$ ${valFmt}</div>
+                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--text-main); font-size: 0.85rem;">
+                        <span style="color: var(--accent); font-size: 0.95rem;">👤</span> ${r.closer}
+                    </div>
                 </td>
+
+                <td style="font-weight: 500; color: var(--text-main);">${r.produto}</td>
+                <td style="font-weight: 600; color: var(--accent);">R$ ${valFmt}</td>
                 <td><span class="status-${r.status.replace(/\s+/g, '')}">${r.status}</span></td>
                 <td style="color:${r.dataVenda ? 'var(--success-light)' : 'var(--text-dark)'}; font-weight:${r.dataVenda ? '600' : 'normal'};">${dataVd}</td>
                 <td style="text-align:right; white-space:nowrap;">
@@ -323,16 +393,21 @@ function renderizarTabela() {
 }
 
 // ==========================================
-// 8. CÁLCULO DE PERÍODOS E METAS B7
+// 9. CÁLCULO DE DATAS E DASHBOARD SINCRONIZADO
 // ==========================================
 function getDatesInfo(dateStr) {
     if (!dateStr) return { isHoje: false, isSemana: false, isMes: false };
-    const d = new Date(dateStr + 'T00:00:00');
+    
+    // Converte de forma precisa sem interferência de fuso horário
+    const partes = dateStr.split('-');
+    const d = new Date(partes[0], partes[1] - 1, partes[2]);
+    
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
 
     const isHoje = d.getTime() === hoje.getTime();
 
+    // Domingo da semana atual até Sábado
     const primDia = new Date(hoje);
     primDia.setDate(hoje.getDate() - hoje.getDay());
     const ultDia = new Date(primDia);
@@ -355,33 +430,35 @@ function calcularDashboard() {
     listaReunioes.forEach(r => {
         const dCall = getDatesInfo(r.data);
         
-        // Contagem de Agendadas
+        // Agendamentos (Contabiliza para todas as metas de esforço do SDR)
         if (r.status !== "Cancelada") {
             if (dCall.isHoje) diaAg++;
             if (dCall.isSemana) semAg++;
             if (dCall.isMes) mesAg++;
         }
 
-        // Contagem de Realizadas (Inclui Realizada e Venda feita)
+        // Realizadas
         if (r.status === "Realizada" || r.status === "Venda feita") {
             if (dCall.isHoje) diaRe++;
             if (dCall.isSemana) semRe++;
             if (dCall.isMes) mesRe++;
         }
 
-        // Faturamento e Comissão (Pela data do fechamento da venda)
+        // Faturamento e Comissão (Com base na data de fechamento da venda)
         if (r.status === "Venda feita") {
             const dVenda = getDatesInfo(r.dataVenda || r.data);
             if (dVenda.isMes) {
                 faturamentoMes += (r.valor || 0);
-                comissaoVendas += (r.valor || 0) * 0.0075; // 0,75% de comissão
+                comissaoVendas += (r.valor || 0) * 0.0075;
             }
         }
     });
 
-    const comissaoTotal = comissaoVendas + bonusAcumulado;
+    // Calcula total da comissão (Vendas + Soma de todos os bônus ativos)
+    let totalBonusVal = listaBonus.reduce((acc, item) => acc + item.val, 0);
+    const comissaoTotal = comissaoVendas + totalBonusVal;
 
-    // Atualiza KPIs de Comissão e Vendas
+    // Atualiza KPIs Topo
     document.getElementById('dash-comissao-total').innerText = `R$ ${comissaoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     document.getElementById('dash-faturamento').innerText = `R$ ${faturamentoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     
@@ -389,18 +466,37 @@ function calcularDashboard() {
     document.getElementById('dash-pct-vendas').innerText = `${pctVendas}% da meta mensal`;
     document.getElementById('bar-faturamento').style.width = `${pctVendas}%`;
 
-    // Atualiza Metas de Reuniões (Diária, Semanal, Mensal)
+    // Atualiza Metas Diárias com Barras e Porcentagens
     document.getElementById('dia-ag').innerText = diaAg;
     document.getElementById('dia-re').innerText = diaRe;
+    const pctDiaAg = Math.min((diaAg / 12) * 100, 100).toFixed(0);
+    const pctDiaRe = Math.min((diaRe / 6) * 100, 100).toFixed(0);
+    document.getElementById('pct-dia-ag').innerText = `${pctDiaAg}%`;
+    document.getElementById('pct-dia-re').innerText = `${pctDiaRe}%`;
+    document.getElementById('bar-dia-ag').style.width = `${pctDiaAg}%`;
+    document.getElementById('bar-dia-re').style.width = `${pctDiaRe}%`;
+
+    // Atualiza Metas Semanais com Barras e Porcentagens
     document.getElementById('sem-ag').innerText = semAg;
     document.getElementById('sem-re').innerText = semRe;
+    const pctSemAg = Math.min((semAg / 60) * 100, 100).toFixed(0);
+    const pctSemRe = Math.min((semRe / 30) * 100, 100).toFixed(0);
+    document.getElementById('pct-sem-ag').innerText = `${pctSemAg}%`;
+    document.getElementById('pct-sem-re').innerText = `${pctSemRe}%`;
+    document.getElementById('bar-sem-ag').style.width = `${pctSemAg}%`;
+    document.getElementById('bar-sem-re').style.width = `${pctSemRe}%`;
+
+    // Atualiza Metas Mensais com Barras e Porcentagens
     document.getElementById('mes-ag').innerText = mesAg;
     document.getElementById('mes-re').innerText = mesRe;
+    const pctMesAg = Math.min((mesAg / 240) * 100, 100).toFixed(0);
+    const pctMesRe = Math.min((mesRe / 100) * 100, 100).toFixed(0);
+    document.getElementById('pct-mes-ag').innerText = `${pctMesAg}%`;
+    document.getElementById('pct-mes-re').innerText = `${pctMesRe}%`;
+    document.getElementById('bar-mes-ag').style.width = `${pctMesAg}%`;
+    document.getElementById('bar-mes-re').style.width = `${pctMesRe}%`;
 
-    const pctSemana = Math.min((semRe / 30) * 100, 100).toFixed(0);
-    document.getElementById('bar-semana').style.width = `${pctSemana}%`;
-
-    // Lógica de Gatilho da Comissão (Mínimo de 100 Realizadas no mês)
+    // Validador do Gatilho da Comissão (100 Realizadas)
     const statusComissao = document.getElementById('status-comissao');
     const msgGatilho = document.getElementById('msg-gatilho');
     
@@ -416,27 +512,4 @@ function calcularDashboard() {
         msgGatilho.innerText = `Meta mínima: 100 realizadas. Faltam ${faltam}.`;
         msgGatilho.style.color = "var(--text-muted)";
     }
-}
-
-// ==========================================
-// 9. MODAL DE BÔNUS DE CAMPANHAS
-// ==========================================
-function abrirModalBonus() {
-    document.getElementById('input-bonus-val').value = bonusAcumulado;
-    document.getElementById('modal-bonus').style.display = 'flex';
-}
-
-function fecharModalBonus() {
-    document.getElementById('modal-bonus').style.display = 'none';
-}
-
-function salvarBonus() {
-    const val = parseFloat(document.getElementById('input-bonus-val').value) || 0;
-    db.collection("config_sdr").doc("premiacoes").set({ valor: val }).then(() => {
-        fecharModalBonus();
-    });
-}
-
-function atualizarUIBonus() {
-    document.getElementById('val-bonus-display').innerText = bonusAcumulado.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 }

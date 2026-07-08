@@ -88,7 +88,6 @@
                     </div>
                 </header>
                 
-                <!-- KPIs Financeiros e Comissões -->
                 <div class="grid-cards">
                     <div class="card card-highlight">
                         <div class="card-header">
@@ -98,8 +97,8 @@
                         <div class="card-body">
                             <div class="value text-green" id="dash-comissao-total">R$ 0,00</div>
                             <div class="bonus-row">
-                                <span class="text-sm text-muted">Bônus de Campanhas: R$ <span id="val-bonus-display">0,00</span></span>
-                                <button class="btn-link" onclick="abrirModalBonus()">+ Adicionar Bônus</button>
+                                <span class="text-sm text-muted">Bônus Ativos: R$ <span id="val-bonus-display">0,00</span></span>
+                                <button class="btn-link" onclick="abrirModalBonus()" style="font-weight: 600;">⚙️ Gerenciar Bônus</button>
                             </div>
                         </div>
                     </div>
@@ -119,72 +118,84 @@
                     </div>
                 </div>
 
-                <h2 class="section-title">Acompanhamento de Metas de Reuniões</h2>
+                <h2 class="section-title">Acompanhamento de Metas de Reuniões (Barras Visuais)</h2>
                 <div class="grid-cards grid-3">
+                    
+                    <!-- DIÁRIA -->
                     <div class="card">
                         <div class="card-header">
-                            <span class="card-title">Diaria</span>
-                            <span class="tag">Metas: 12 Ag. / 6 Real.</span>
+                            <span class="card-title">Diária (Hoje)</span>
+                            <span class="tag">12 Ag. / 6 Real.</span>
                         </div>
                         <div class="card-body">
-                            <div class="metrics-row">
-                                <div class="metric">
-                                    <span class="label">Agendadas</span>
-                                    <span class="num text-blue" id="dia-ag">0</span>
+                            <div class="progress-group">
+                                <div class="progress-label">
+                                    <span>🔵 Agendadas (<span id="dia-ag">0</span>/12)</span>
+                                    <span id="pct-dia-ag" class="text-muted">0%</span>
                                 </div>
-                                <div class="divider"></div>
-                                <div class="metric">
-                                    <span class="label">Realizadas</span>
-                                    <span class="num text-green" id="dia-re">0</span>
-                                </div>
+                                <div class="progress-bar-container"><div class="progress-bar bar-blue" id="bar-dia-ag" style="width: 0%"></div></div>
                             </div>
-                            <p class="sub text-center mt-2">* 10 base + 20% reserva (2 leads)</p>
+                            <div class="progress-group" style="margin-top: 15px;">
+                                <div class="progress-label">
+                                    <span>🟢 Realizadas (<span id="dia-re">0</span>/6)</span>
+                                    <span id="pct-dia-re" class="text-muted">0%</span>
+                                </div>
+                                <div class="progress-bar-container"><div class="progress-bar bar-green" id="bar-dia-re" style="width: 0%"></div></div>
+                            </div>
+                            <p class="sub text-center mt-3" style="font-size: 0.75rem;">* 10 base + 20% reserva (2 leads)</p>
                         </div>
                     </div>
 
+                    <!-- SEMANAL -->
                     <div class="card">
                         <div class="card-header">
-                            <span class="card-title">Semanal (Destaque)</span>
-                            <span class="tag">Metas: 60 Ag. / 30 Real.</span>
+                            <span class="card-title">Semanal (5 Dias Úteis)</span>
+                            <span class="tag">60 Ag. / 30 Real.</span>
                         </div>
                         <div class="card-body">
-                            <div class="metrics-row">
-                                <div class="metric">
-                                    <span class="label">Agendadas</span>
-                                    <span class="num text-blue" id="sem-ag">0</span>
+                            <div class="progress-group">
+                                <div class="progress-label">
+                                    <span>🔵 Agendadas (<span id="sem-ag">0</span>/60)</span>
+                                    <span id="pct-sem-ag" class="text-muted">0%</span>
                                 </div>
-                                <div class="divider"></div>
-                                <div class="metric">
-                                    <span class="label">Realizadas</span>
-                                    <span class="num text-green" id="sem-re">0</span>
+                                <div class="progress-bar-container"><div class="progress-bar bar-blue" id="bar-sem-ag" style="width: 0%"></div></div>
+                            </div>
+                            <div class="progress-group" style="margin-top: 15px;">
+                                <div class="progress-label">
+                                    <span>🟢 Realizadas (<span id="sem-re">0</span>/30)</span>
+                                    <span id="pct-sem-re" class="text-muted">0%</span>
                                 </div>
+                                <div class="progress-bar-container"><div class="progress-bar bar-green" id="bar-sem-re" style="width: 0%"></div></div>
                             </div>
-                            <div class="progress-bar-container mt-2">
-                                <div class="progress-bar" id="bar-semana" style="width: 0%"></div>
-                            </div>
+                            <p class="sub text-center mt-3" style="font-size: 0.75rem;">Meta de conversão para o time</p>
                         </div>
                     </div>
 
+                    <!-- MENSAL -->
                     <div class="card">
                         <div class="card-header">
-                            <span class="card-title">Mensal (Ativação)</span>
-                            <span class="tag">Metas: 240 Ag. / 100 Real.</span>
+                            <span class="card-title">Mensal (Mês Corrente)</span>
+                            <span class="tag">240 Ag. / 100 Real.</span>
                         </div>
                         <div class="card-body">
-                            <div class="metrics-row">
-                                <div class="metric">
-                                    <span class="label">Agendadas</span>
-                                    <span class="num text-blue" id="mes-ag">0</span>
+                            <div class="progress-group">
+                                <div class="progress-label">
+                                    <span>🔵 Agendadas (<span id="mes-ag">0</span>/240)</span>
+                                    <span id="pct-mes-ag" class="text-muted">0%</span>
                                 </div>
-                                <div class="divider"></div>
-                                <div class="metric">
-                                    <span class="label">Realizadas</span>
-                                    <span class="num text-green" id="mes-re">0</span>
-                                </div>
+                                <div class="progress-bar-container"><div class="progress-bar bar-blue" id="bar-mes-ag" style="width: 0%"></div></div>
                             </div>
-                            <p class="sub text-center mt-2" id="msg-gatilho">Faltam 100 realizadas para ativar comissão</p>
+                            <div class="progress-group" style="margin-top: 15px;">
+                                <div class="progress-label">
+                                    <span>🟢 Realizadas (<span id="mes-re">0</span>/100)</span>
+                                    <span id="pct-mes-re" class="text-muted">0%</span>
+                                </div>
+                                <div class="progress-bar-container"><div class="progress-bar bar-green" id="bar-mes-re" style="width: 0%"></div></div>
+                            </div>
+                            <p class="sub text-center mt-3" id="msg-gatilho" style="font-size: 0.75rem;">Faltam 100 realizadas para ativar comissão</p>
                         </div>
                     </div>
+
                 </div>
             </section>
 
@@ -193,102 +204,35 @@
                 <header class="page-header">
                     <div>
                         <h1>Agenda e Roteamento de Leads</h1>
-                        <p class="text-muted">Preenchimento rápido e distribuição inteligente por conversão e carga</p>
+                        <p class="text-muted">Distribuição inteligente por conversão e carga da equipe B7</p>
                     </div>
+                    <button class="btn btn-primary" onclick="abrirModalReuniao()" style="padding: 12px 24px; font-size: 0.9rem;">
+                        + Novo Agendamento
+                    </button>
                 </header>
                 
-                <div class="layout-split">
-                    <!-- Formulário Limpo -->
-                    <div class="panel form-panel">
-                        <h3 class="panel-title">Novo Agendamento / Atualizar</h3>
-                        <form id="form-reuniao" onsubmit="salvarReuniao(event)">
-                            <input type="hidden" id="reuniao-id">
-                            
-                            <div class="form-group">
-                                <label>Nome do Lead</label>
-                                <input type="text" id="lead-nome" placeholder="Nome completo" required>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Temperatura do Lead</label>
-                                    <select id="lead-temp" required>
-                                        <option value="Quente">🔥 Quente (Alta intenção)</option>
-                                        <option value="Morno">☀️ Morno (Interessado)</option>
-                                        <option value="Frio">❄️ Frio (Prospecção/Outbound)</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Data da Reunião</label>
-                                    <input type="date" id="reuniao-data" required>
-                                </div>
-                            </div>
-
-                            <!-- ROTEAMENTO INTELIGENTE -->
-                            <div class="form-group routing-box">
-                                <div class="routing-header">
-                                    <label>Closer (Roteamento Inteligente)</label>
-                                    <span class="text-xs text-blue" id="routing-tip">Calculando prioridade...</span>
-                                </div>
-                                <select id="reuniao-closer" required></select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Produto / Formação</label>
-                                <select id="reuniao-produto" onchange="atualizarValorProduto()" required></select>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Valor Estimado/Fechado (R$)</label>
-                                    <input type="number" id="reuniao-valor" step="0.01" required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Situação da Reunião</label>
-                                    <select id="reuniao-status" onchange="toggleDataVenda()">
-                                        <option value="Agendada">🔵 Agendada</option>
-                                        <option value="Realizada">🟢 Realizada</option>
-                                        <option value="Cancelada">🔴 Cancelada</option>
-                                        <option value="No show">⚪ No show</option>
-                                        <option value="Venda feita">🏆 Venda feita</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group" id="group-data-venda" style="display: none; background: rgba(16,185,129,0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--success);">
-                                <label style="color: var(--success-light); font-weight: 600;">Data do Fechamento da Venda</label>
-                                <input type="date" id="venda-data">
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="submit" class="btn btn-primary">Salvar no Firebase</button>
-                                <button type="button" class="btn btn-secondary" onclick="limparFormReuniao()">Limpar</button>
-                            </div>
-                        </form>
+                <div class="panel">
+                    <div class="panel-header-row">
+                        <h3 class="panel-title" style="margin-bottom: 0;">Lista de Reuniões em Tempo Real</h3>
+                        <span class="text-muted text-sm" id="total-registros">0 registros</span>
                     </div>
-
-                    <!-- Tabela de Reuniões -->
-                    <div class="panel table-panel">
-                        <div class="panel-header-row">
-                            <h3 class="panel-title">Lista de Reuniões (Tempo Real)</h3>
-                            <span class="text-muted text-sm" id="total-registros">0 registros</span>
-                        </div>
-                        <div class="table-wrapper">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Lead & Temp</th>
-                                        <th>Data Call</th>
-                                        <th>Closer</th>
-                                        <th>Produto / Valor</th>
-                                        <th>Situação</th>
-                                        <th>Data Venda</th>
-                                        <th style="text-align: right;">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="lista-reunioes"></tbody>
-                            </table>
-                        </div>
+                    <div class="table-wrapper" style="margin-top: 20px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Lead & E-mail</th>
+                                    <th>Temperatura</th>
+                                    <th>Data Call</th>
+                                    <th>Closer</th>
+                                    <th>Produto / Formação</th>
+                                    <th>Valor (R$)</th>
+                                    <th>Situação</th>
+                                    <th>Data Venda</th>
+                                    <th style="text-align: right;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-reunioes"></tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -296,18 +240,126 @@
         </main>
     </div>
 
-    <!-- MODAL DE BÔNUS -->
-    <div id="modal-bonus" class="auth-overlay" style="display: none;">
-        <div class="auth-box" style="max-width: 400px;">
-            <h3>Bônus de Campanhas</h3>
-            <p class="text-muted text-sm mb-3">Adicione premiações temporárias que somam diretamente na sua comissão.</p>
-            <div class="form-group">
-                <label>Valor Total Acumulado de Bônus (R$)</label>
-                <input type="number" id="input-bonus-val" step="0.01" placeholder="Ex: 500.00">
+    <!-- MODAL DE AGENDAMENTO / EDICÃO DE REUNIÃO -->
+    <div id="modal-reuniao" class="auth-overlay" style="display: none;">
+        <div class="auth-box" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                <h3 id="modal-reuniao-title" style="font-size: 1.2rem; margin: 0;">Novo Agendamento</h3>
+                <button type="button" onclick="fecharModalReuniao()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">×</button>
             </div>
+            
+            <form id="form-reuniao" onsubmit="salvarReuniao(event)">
+                <input type="hidden" id="reuniao-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome do Lead</label>
+                        <input type="text" id="lead-nome" placeholder="Nome completo" required>
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail do Lead</label>
+                        <input type="email" id="lead-email" placeholder="lead@empresa.com" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Temperatura do Lead</label>
+                        <select id="lead-temp" required>
+                            <option value="Quente">🔥 Quente (Alta intenção)</option>
+                            <option value="Morno">☀️ Morno (Interessado)</option>
+                            <option value="Frio">❄️ Frio (Prospecção/Outbound)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data da Reunião</label>
+                        <input type="date" id="reuniao-data" onchange="calcularRoteamentoInteligente()" required>
+                    </div>
+                </div>
+
+                <div class="form-group routing-box">
+                    <div class="routing-header">
+                        <label>Closer (Roteamento Inteligente)</label>
+                        <span class="text-xs text-blue" id="routing-tip">Calculando prioridade...</span>
+                    </div>
+                    <select id="reuniao-closer" required></select>
+                </div>
+
+                <div class="form-group">
+                    <label>Produto / Formação</label>
+                    <select id="reuniao-produto" onchange="atualizarValorProduto()" required></select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Valor Estimado/Fechado (R$)</label>
+                        <input type="number" id="reuniao-valor" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Situação da Reunião</label>
+                        <select id="reuniao-status" onchange="toggleDataVenda()">
+                            <option value="Agendada">🔵 Agendada</option>
+                            <option value="Realizada">🟢 Realizada</option>
+                            <option value="Cancelada">🔴 Cancelada</option>
+                            <option value="No show">⚪ No show</option>
+                            <option value="Venda feita">🏆 Venda feita</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" id="group-data-venda" style="display: none; background: rgba(16,185,129,0.1); padding: 12px; border-radius: 8px; border: 1px solid var(--success);">
+                    <label style="color: var(--success-light); font-weight: 600;">Data do Fechamento da Venda</label>
+                    <input type="date" id="venda-data">
+                </div>
+
+                <div class="form-actions" style="margin-top: 25px;">
+                    <button type="submit" class="btn btn-primary">Salvar no Firebase</button>
+                    <button type="button" class="btn btn-secondary" onclick="fecharModalReuniao()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE GERENCIAMENTO DE BÔNUS (COM DESCRIÇÃO) -->
+    <div id="modal-bonus" class="auth-overlay" style="display: none;">
+        <div class="auth-box" style="max-width: 500px; max-height: 85vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                <h3 style="margin: 0;">Bônus e Campanhas Ativas</h3>
+                <button type="button" onclick="fecharModalBonus()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            
+            <p class="text-muted text-sm mb-3">Adicione premiações momentâneas. O valor somará automaticamente com seus 0,75% de comissão.</p>
+            
+            <!-- Formulário para adicionar bônus -->
+            <form onsubmit="adicionarBonus(event)" style="background: var(--bg-app); padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label>Descrição da Campanha / Premiação</label>
+                    <input type="text" id="novo-bonus-desc" placeholder="Ex: Campanha Fechamento PJ - 1º Lugar" required>
+                </div>
+                <div class="form-row" style="margin-bottom: 10px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="novo-bonus-val" step="0.01" placeholder="500.00" required>
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%; height: 38px;">+ Adicionar</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Lista de Bônus Adicionados -->
+            <label style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-dark); font-weight: 600; display: block; margin-bottom: 8px;">Bônus Ativos</label>
+            <div id="lista-bonus-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; margin-bottom: 20px;">
+                <!-- Preenchido via JS -->
+            </div>
+
+            <div style="border-top: 1px solid var(--border); padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; font-size: 0.9rem;">Total de Bônus:</span>
+                <span id="modal-bonus-total-preview" style="font-size: 1.2rem; font-weight: bold; color: var(--success-light);">R$ 0,00</span>
+            </div>
+
             <div class="form-actions mt-3">
-                <button class="btn btn-primary" onclick="salvarBonus()">Salvar Bônus</button>
-                <button class="btn btn-secondary" onclick="fecharModalBonus()">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-full" onclick="fecharModalBonus()">Concluir</button>
             </div>
         </div>
     </div>
