@@ -21,7 +21,7 @@ const db = firebase.firestore();
 // 2. DADOS FIXOS DO NEGÓCIO (B7 BUSINESS)
 // ==========================================
 const CLOSERS_B7 = [
-    "Ana", "Matheus Charles", "Matheus Angelo", "Manuella Soares", "Manuela Barbosa", "Junior", "Gustavo"
+    "Ana", "Matheus Charles", "Manuella Soares", "Junior" 
 ];
 
 const PRODUTOS_B7 = [
