@@ -1,5 +1,5 @@
 // ==========================================
-// 1. CONFIGURAÇÃO E INICIALIZAÇÃO FIREBASE
+// 1. // FIREBASE
 // ==========================================
 
 const firebaseConfig = {
@@ -18,498 +18,605 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ==========================================
-// 2. DADOS FIXOS DO NEGÓCIO (B7 BUSINESS)
+// 2. DADOS PADRÃO
 // ==========================================
-const CLOSERS_B7 = [
-    "Ana", "Matheus Charles", "Manuella Soares", "Junior" 
-];
 
 const PRODUTOS_B7 = [
     { nome: "MBA Investments & Asset Allocation", valor: 17997 },
-    { nome: "MBA Wealth Management", valor: 29997 },
-    { nome: "MBA Business & Financial Services", valor: 14997 },
-    { nome: "MBA Middle Market & Corporate Banking", valor: 29997},
-    { nome: "MBA Private Banking & Offshore", valor: 70000 },
-    { nome: "Formação Especialista em Investimentos", valor: 9997},
-    { nome: "Formação Gerente PJ", valor: 9997 }
+  { nome: "MBA Wealth Management", valor: 29997 },
+  { nome: "MBA Business & Financial Services", valor: 14997 },
+  { nome: "MBA Middle Market & Corporate Banking", valor: 29997 },
+  { nome: "MBA Private Banking & Offshore", valor: 70000 },
+  { nome: "Formação Especialista em Investimentos", valor: 9997 },
+  { nome: "Formação Gerente PJ", valor: 9997 },
 ];
-
+const CONFIG_DEFAULT = {
+  closers: ["Ana", "Matheus Charles", "Matheus Angelo", "Manuella Soares", "Manuela Barbosa", "Junior", "Gustavo"],
+  goals: {
+    dailyAg: 12, dailyRe: 6,
+    weeklyAg: 60, weeklyRe: 30,
+    monthlyAg: 240, monthlyRe: 100,
+    salesTarget: 600000,
+    minRealizadas: 100,
+  },
+  commissionRate: 0.0075,
+};
 let listaReunioes = [];
-let listaBonus = []; // Agora armazena objetos com {id, desc, val}
+let listaBonus = [];
+let config = structuredClone(CONFIG_DEFAULT);
+// Navegação do dashboard
+let periodType = "month";
+let refDate = new Date();
+refDate.setHours(0, 0, 0, 0);
 
 // ==========================================
-// 3. AUTENTICAÇÃO EM NUVEM (AUTH)
+// 3. AUTH
 // ==========================================
+
 auth.onAuthStateChanged((user) => {
-    if (user) {
-        abrirSistema(user);
-    } else {
-        document.getElementById('login-overlay').style.display = 'flex';
-        document.getElementById('app-container').style.display = 'none';
-    }
+    if (user) abrirSistema(user);
+  else {
+    document.getElementById("login-overlay").hidden = false;
+    document.getElementById("app-container").hidden = true;
+  }
 });
 
 function abrirSistema(user) {
-    document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('app-container').style.display = 'flex';
-    
-    if (user && user.email) {
-        document.getElementById('user-display-name').innerText = user.email.split('@')[0].toUpperCase();
-    }
-    
-    try {
-        iniciarSyncNuvem();
-        carregarBonus();
-    } catch (erro) {
-        console.error("Erro ao sincronizar com Firestore:", erro);
-    }
+    document.getElementById("login-overlay").hidden = true;
+  document.getElementById("app-container").hidden = false;
+  if (user?.email) {
+    document.getElementById("user-display-name").textContent = user.email.split("@")[0].toUpperCase();
+  }
+  iniciarSyncNuvem();
+  carregarBonus();
+  carregarConfig();
+  wireNavigation();
+  wirePeriodNav();
+  wireFilters();
 }
 
 function realizarLogin(e) {
     e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const pass = document.getElementById('login-password').value;
-    const errDiv = document.getElementById('login-error');
-    
-    errDiv.style.display = 'none';
-    
-    auth.signInWithEmailAndPassword(email, pass)
-        .then((credencial) => {
-            abrirSistema(credencial.user);
-        })
-        .catch(error => {
-            errDiv.style.display = 'block';
-            errDiv.innerText = "Erro ao entrar: Verifique seu e-mail e senha.";
-        });
+  const errDiv = document.getElementById("login-error");
+  errDiv.hidden = true;
+  auth.signInWithEmailAndPassword(
+    document.getElementById("login-email").value,
+    document.getElementById("login-password").value
+  ).catch(() => {
+    errDiv.hidden = false;
+    errDiv.textContent = "E-mail ou senha incorretos.";
+  });
 }
 
-function realizarLogout() {
-    auth.signOut();
-}
+function realizarLogout() { auth.signOut(); }
 
 // ==========================================
-// 4. BANCO DE DADOS EM TEMPO REAL (FIRESTORE)
+// 4. FIRESTORE SYNC
 // ==========================================
+
 function iniciarSyncNuvem() {
-    db.collection("reunioes_b7").onSnapshot((snapshot) => {
-        listaReunioes = [];
-        snapshot.forEach((doc) => {
-            listaReunioes.push({ id: doc.id, ...doc.data() });
-        });
-        renderizarTudo();
-    });
+    db.collection("reunioes_b7").onSnapshot((snap) => {
+    listaReunioes = [];
+    snap.forEach((doc) => listaReunioes.push({ id: doc.id, ...doc.data() }));
+    renderizarTudo();
+  });
 }
 
 function carregarBonus() {
-    db.collection("bonus_sdr").onSnapshot((snapshot) => {
-        listaBonus = [];
-        let total = 0;
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            listaBonus.push({ id: doc.id, desc: data.desc, val: data.val });
-            total += parseFloat(data.val || 0);
-        });
-        atualizarUIBonus(total);
-        calcularDashboard();
-    });
+    db.collection("bonus_sdr").onSnapshot((snap) => {
+    listaBonus = [];
+    snap.forEach((doc) => listaBonus.push({ id: doc.id, ...doc.data() }));
+    renderizarTudo();
+  });
 }
 
-// ==========================================
-// 5. CONTROLE DOS MODAIS (AGENDAMENTO & BÔNUS)
-// ==========================================
-function abrirModalReuniao(isEdicao = false) {
-    document.getElementById('modal-reuniao-title').innerText = isEdicao ? "Editar Reunião" : "Novo Agendamento";
-    if (!isEdicao) {
-        limparFormReuniao();
-        document.getElementById('reuniao-data').value = new Date().toISOString().split('T')[0];
+function carregarConfig() {
+  db.collection("config_sdr").doc("settings").onSnapshot((doc) => {
+    if (doc.exists) {
+      const d = doc.data();
+      config = {
+        closers: d.closers || CONFIG_DEFAULT.closers,
+        goals: { ...CONFIG_DEFAULT.goals, ...(d.goals || {}) },
+        commissionRate: d.commissionRate ?? CONFIG_DEFAULT.commissionRate,
+      };
     }
-    renderizarProdutos();
-    calcularRoteamentoInteligente();
-    document.getElementById('modal-reuniao').style.display = 'flex';
+    renderConfigForm();
+    renderizarTudo();
+  });
 }
 
-function fecharModalReuniao() {
-    document.getElementById('modal-reuniao').style.display = 'none';
-    limparFormReuniao();
-}
+function salvarConfig() {
+  config.goals.salesTarget = parseFloat(document.getElementById("cfg-meta-vendas").value) || 600000;
+  config.commissionRate = (parseFloat(document.getElementById("cfg-comissao").value) || 0.75) / 100;
+  config.goals.minRealizadas = parseInt(document.getElementById("cfg-min-realizadas").value) || 100;
 
-function abrirModalBonus() {
-    renderizarListaBonusModal();
-    document.getElementById('modal-bonus').style.display = 'flex';
-}
+  const metaFields = [
+    ["dailyAg", "cfg-daily-ag"], ["dailyRe", "cfg-daily-re"],
+    ["weeklyAg", "cfg-weekly-ag"], ["weeklyRe", "cfg-weekly-re"],
+    ["monthlyAg", "cfg-monthly-ag"], ["monthlyRe", "cfg-monthly-re"],
+  ];
+  metaFields.forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el) config.goals[key] = parseInt(el.value) || CONFIG_DEFAULT.goals[key];
+  });
 
-function fecharModalBonus() {
-    document.getElementById('modal-bonus').style.display = 'none';
-}
-
-function adicionarBonus(e) {
-    e.preventDefault();
-    const desc = document.getElementById('novo-bonus-desc').value.trim();
-    const val = parseFloat(document.getElementById('novo-bonus-val').value);
-    
-    if (desc && val) {
-        db.collection("bonus_sdr").add({ desc: desc, val: val }).then(() => {
-            document.getElementById('novo-bonus-desc').value = "";
-            document.getElementById('novo-bonus-val').value = "";
-        });
-    }
-}
-
-function removerBonus(id) {
-    db.collection("bonus_sdr").doc(id).delete();
-}
-
-function renderizarListaBonusModal() {
-    const container = document.getElementById('lista-bonus-container');
-    container.innerHTML = "";
-    
-    let total = 0;
-    
-    if (listaBonus.length === 0) {
-        container.innerHTML = `<span class="text-muted text-center text-sm" style="padding: 15px;">Nenhum bônus ativo cadastrado.</span>`;
-    } else {
-        listaBonus.forEach(b => {
-            total += b.val;
-            container.innerHTML += `
-                <div class="bonus-item">
-                    <div>
-                        <div style="font-weight: 600; color: var(--text-main);">${b.desc}</div>
-                        <div style="font-size: 0.75rem; color: var(--success-light);">R$ ${b.val.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-                    </div>
-                    <button type="button" class="btn-icon del" onclick="removerBonus('${b.id}')">🗑️</button>
-                </div>
-            `;
-        });
-    }
-    
-    document.getElementById('modal-bonus-total-preview').innerText = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-}
-
-function atualizarUIBonus(totalVal) {
-    document.getElementById('val-bonus-display').innerText = totalVal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  config.closers = [...document.querySelectorAll("#closers-config-list input")].map((i) => i.value.trim()).filter(Boolean);
+  db.collection("config_sdr").doc("settings").set({
+    closers: config.closers,
+    goals: config.goals,
+    commissionRate: config.commissionRate,
+    atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+  }).then(() => alert("Configurações salvas!"));
 }
 
 // ==========================================
-// 6. ROTEAMENTO INTELIGENTE DE CLOSERS
+// 5. NAVEGAÇÃO
 // ==========================================
-function calcularRoteamentoInteligente() {
-    const dataSelecionada = document.getElementById('reuniao-data').value || new Date().toISOString().split('T')[0];
-    const infoData = getDatesInfo(dataSelecionada);
-    
-    let scores = CLOSERS_B7.map(closerNome => {
-        let vendasConvertidas = 0;
-        let agendamentosNaSemana = 0;
 
-        listaReunioes.forEach(r => {
-            if (r.closer === closerNome) {
-                if (r.status === "Venda feita" && getDatesInfo(r.dataVenda || r.data).isMes) {
-                    vendasConvertidas++;
-                }
-                if (r.status !== "Cancelada" && getDatesInfo(r.data).isSemana === infoData.isSemana) {
-                    agendamentosNaSemana++;
-                }
-            }
-        });
-
-        const scoreFinal = (vendasConvertidas * 10) - (agendamentosNaSemana * 2);
-        return { nome: closerNome, score: scoreFinal, vendas: vendasConvertidas, carga: agendamentosNaSemana };
-    });
-
-    scores.sort((a, b) => b.score - a.score);
-    
-    const select = document.getElementById('reuniao-closer');
-    const valorAtual = select.value;
-    select.innerHTML = '<option value="">Selecione o Closer...</option>';
-    
-    scores.forEach((c, idx) => {
-        const tagRecomendado = idx === 0 ? " ⭐ RECOMENDADO" : "";
-        const label = `${c.nome}${tagRecomendado} (Score: ${c.score} | Vendas: ${c.vendas} | Carga Sem.: ${c.carga})`;
-        select.innerHTML += `<option value="${c.nome}" ${c.nome === valorAtual ? 'selected' : ''}>${label}</option>`;
-    });
-
-    if (scores.length > 0) {
-        document.getElementById('routing-tip').innerText = `Prioridade atual: ${scores[0].nome}`;
-    }
+function wireNavigation() {
+  document.querySelectorAll(".nav-link").forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelectorAll(".nav-link").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(`view-${btn.dataset.view}`).classList.add("active");
+    };
+  });
 }
 
-// ==========================================
-// 7. INTERFACE E CONTROLES GERAIS
-// ==========================================
-function renderizarTudo() {
-    renderizarProdutos();
-    calcularRoteamentoInteligente();
+function wirePeriodNav() {
+  document.getElementById("period-type").onchange = (e) => {
+    periodType = e.target.value;
+    renderizarDashboard();
+  };
+  document.getElementById("nav-prev").onclick = () => { navigatePeriod(-1); };
+  document.getElementById("nav-next").onclick = () => { navigatePeriod(1); };
+  document.getElementById("nav-today").onclick = () => {
+    refDate = new Date(); refDate.setHours(0, 0, 0, 0);
+    renderizarDashboard();
+  };
+}
+
+function navigatePeriod(dir) {
+  const d = new Date(refDate);
+  if (periodType === "day") d.setDate(d.getDate() + dir);
+  else if (periodType === "week") d.setDate(d.getDate() + dir * 7);
+  else d.setMonth(d.getMonth() + dir);
+  refDate = d;
+  renderizarDashboard();
+}
+
+function wireFilters() {
+  ["filtro-closer", "filtro-data-de", "filtro-data-ate", "filtro-status", "filtro-tipo"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", renderizarTabela);
+  });
+  document.getElementById("limpar-filtros").onclick = () => {
+    document.getElementById("filtro-closer").value = "";
+    document.getElementById("filtro-data-de").value = "";
+    document.getElementById("filtro-data-ate").value = "";
+    document.getElementById("filtro-status").value = "";
+    document.getElementById("filtro-tipo").value = "";
     renderizarTabela();
-    calcularDashboard();
-    if (document.getElementById('modal-bonus').style.display === 'flex') {
-        renderizarListaBonusModal();
-    }
+  };
 }
 
-function switchView(viewName, element) {
-    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.getElementById(`view-${viewName}`).classList.add('active');
-    if(element) element.classList.add('active');
+// ==========================================
+// DATAS & PERÍODOS
+// ==========================================
+
+function parseDate(str) {
+  if (!str) return null;
+  const [y, m, d] = str.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
-function toggleDataVenda() {
-    const status = document.getElementById('reuniao-status').value;
-    const group = document.getElementById('group-data-venda');
-    const input = document.getElementById('venda-data');
-    
-    if (status === "Venda feita") {
-        group.style.display = "flex";
-        if (!input.value) input.value = new Date().toISOString().split('T')[0];
-    } else {
-        group.style.display = "none";
-        input.value = "";
+function fmtBR(date) {
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: periodType === "month" ? "numeric" : undefined });
+}
+
+function getPeriodRange() {
+  const d = new Date(refDate);
+  if (periodType === "day") {
+    return { from: d, to: d, label: fmtBR(d) };
+  }
+  if (periodType === "week") {
+    const from = new Date(d);
+    from.setDate(d.getDate() - d.getDay());
+    const to = new Date(from);
+    to.setDate(from.getDate() + 6);
+    return { from, to, label: `${fmtBR(from)} — ${fmtBR(to)}` };
+  }
+  const from = new Date(d.getFullYear(), d.getMonth(), 1);
+  const to = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return {
+    from, to,
+    label: d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
+  };
+}
+
+function inPeriod(dateStr, from, to) {
+  const d = parseDate(dateStr);
+  if (!d) return false;
+  const f = new Date(from); f.setHours(0, 0, 0, 0);
+  const t = new Date(to); t.setHours(23, 59, 59, 999);
+  return d >= f && d <= t;
+}
+
+function reunioesNoPeriodo(from, to) {
+  return listaReunioes.filter((r) => inPeriod(r.data, from, to));
+}
+
+function fmtMoney(v) {
+  return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ==========================================
+// 8. DASHBOARD
+// ==========================================
+
+function renderizarDashboard() {
+    const { from, to, label } = getPeriodRange();
+  document.getElementById("period-label").textContent = label;
+    const g = config.goals;
+    const items = reunioesNoPeriodo(new Date(from), new Date(to));
+  let ag = 0, re = 0, noShow = 0, vendas = 0, faturamento = 0;
+  items.forEach((r) => {
+    if (r.status !== "Cancelada") ag++;
+    if (r.status === "Realizada" || r.status === "Venda feita") re++;
+    if (r.status === "No show") noShow++;
+    if (r.status === "Venda feita") {
+      vendas++;
+      const dv = parseDate(r.dataVenda || r.data);
+      if (dv && inPeriod(r.dataVenda || r.data, new Date(from), new Date(to))) {
+        faturamento += r.valor || 0;
+      }
     }
+  });
+  const metaAg = periodType === "day" ? g.dailyAg : periodType === "week" ? g.weeklyAg : g.monthlyAg;
+  const metaRe = periodType === "day" ? g.dailyRe : periodType === "week" ? g.weeklyRe : g.monthlyRe;
+document.getElementById("kpi-row").innerHTML = `
+    <div class="kpi-card">
+      <div class="label">Agendadas</div>
+      <div class="val">${ag}</div>
+      <div class="sub">Meta: ${metaAg}</div>
+      <div class="progress-track"><div class="progress-fill blue" style="width:${Math.min(100, (ag / metaAg) * 100)}%"></div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Realizadas</div>
+      <div class="val">${re}</div>
+      <div class="sub">Meta: ${metaRe}</div>
+      <div class="progress-track"><div class="progress-fill green" style="width:${Math.min(100, (re / metaRe) * 100)}%"></div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">No-show</div>
+      <div class="val">${noShow}</div>
+      <div class="sub">No período</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Vendas</div>
+      <div class="val">${vendas}</div>
+      <div class="sub">${fmtMoney(faturamento)}</div>
+    </div>`;
+
+ const pctMeta = Math.min(100, (faturamento / g.salesTarget) * 100);
+  document.getElementById("meta-faturamento").textContent = fmtMoney(faturamento);
+  document.getElementById("meta-pct").textContent = `${pctMeta.toFixed(1)}%`;
+  document.getElementById("bar-meta").style.width = `${pctMeta}%`;
+  document.getElementById("meta-target-label").textContent = fmtMoney(g.salesTarget);
+ const totalDecisao = re + noShow;
+  const pctShow = totalDecisao ? ((re / totalDecisao) * 100).toFixed(1) : "—";
+  const pctNoShow = totalDecisao ? ((noShow / totalDecisao) * 100).toFixed(1) : "—";
+  const pctConv = totalDecisao ? ((vendas / totalDecisao) * 100).toFixed(1) : "—";
+  document.getElementById("stats-table").innerHTML = `
+    <tr><td>Agendadas (sem canceladas)</td><td>${ag}</td><td>—</td></tr>
+    <tr><td>Realizadas + Vendas</td><td>${re}</td><td>${pctShow}%</td></tr>
+    <tr><td>No-show</td><td>${noShow}</td><td>${pctNoShow}%</td></tr>
+    <tr><td>Vendas fechadas</td><td>${vendas}</td><td>${pctConv}%</td></tr>
+    <tr><td>Taxa show (realizadas ÷ decisão)</td><td colspan="2"><strong>${pctShow}%</strong></td></tr>
+    <tr><td>Taxa conversão (vendas ÷ decisão)</td><td colspan="2"><strong>${pctConv}%</strong></td></tr>`;
+  renderRanking(from, to);
+  const taxa = config.commissionRate;
+  const comissaoVendas = faturamento * taxa;
+  const totalBonus = listaBonus.reduce((a, b) => a + (b.val || 0), 0);
+  const totalFinal = comissaoVendas + totalBonus;
+  document.getElementById("val-comissao-vendas").textContent = fmtMoney(comissaoVendas);
+  document.getElementById("val-taxa-comissao").textContent = `Taxa: ${(taxa * 100).toFixed(2)}% sobre vendas`;
+  document.getElementById("val-bonus-total").textContent = fmtMoney(totalBonus);
+  document.getElementById("val-bonus-count").textContent = `${listaBonus.length} bônus ativo(s)`;
+  document.getElementById("val-total-final").textContent = fmtMoney(totalFinal);
+  const preview = document.getElementById("bonus-preview-list");
+  preview.innerHTML = listaBonus.length
+    ? listaBonus.map((b) => `<span class="bonus-chip">${esc(b.desc)} · <strong>${fmtMoney(b.val)}</strong></span>`).join("")
+    : `<span class="text-muted text-sm">Nenhum bônus cadastrado.</span>`;
+  const mesFrom = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+  const mesTo = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0);
+  const mesRe = reunioesNoPeriodo(mesFrom, mesTo).filter((r) => r.status === "Realizada" || r.status === "Venda feita").length;
+  const banner = document.getElementById("status-comissao");
+  if (mesRe >= g.minRealizadas) {
+    banner.className = "status-banner success";
+    banner.textContent = `Comissão liberada — ${mesRe} realizadas no mês (mín. ${g.minRealizadas})`;
+  } else {
+    banner.className = "status-banner warning";
+    banner.textContent = `Faltam ${g.minRealizadas - mesRe} realizadas para liberar comissão (${mesRe}/${g.minRealizadas})`;
+  }
+}
+
+function renderRanking(from, to) {
+  const items = reunioesNoPeriodo(new Date(from), new Date(to));
+  const map = {};
+  config.closers.forEach((nome) => {
+    map[nome] = { ag: 0, re: 0, ns: 0, vendas: 0, total: 0 };
+  });
+  items.forEach((r) => {
+    if (!map[r.closer]) map[r.closer] = { ag: 0, re: 0, ns: 0, vendas: 0, total: 0 };
+    const c = map[r.closer];
+    if (r.status !== "Cancelada") c.ag++;
+    if (r.status === "Realizada" || r.status === "Venda feita") c.re++;
+    if (r.status === "No show") c.ns++;
+    if (r.status === "Venda feita") { c.vendas++; c.total += r.valor || 0; }
+  });
+  const rows = Object.entries(map)
+    .sort((a, b) => b[1].total - a[1].total)
+    .map(([nome, s]) => `<tr>
+      <td><strong>${esc(nome)}</strong></td>
+      <td>${s.ag}</td><td>${s.re}</td><td>${s.ns}</td><td>${s.vendas}</td>
+      <td>${fmtMoney(s.total)}</td>
+    </tr>`).join("");
+  document.getElementById("ranking-table").innerHTML = rows || `<tr><td colspan="6" class="text-muted">Sem dados</td></tr>`;
+}
+
+// ==========================================
+// 9. REUNIÕES — TABELA & FILTROS
+// ==========================================
+
+function renderizarTabela() {
+  const tbody = document.getElementById("lista-reunioes");
+  const closerF = document.getElementById("filtro-closer").value;
+  const deF = document.getElementById("filtro-data-de").value;
+  const ateF = document.getElementById("filtro-data-ate").value;
+  const statusF = document.getElementById("filtro-status").value;
+  const tipoF = document.getElementById("filtro-tipo").value;
+  let rows = [...listaReunioes].sort((a, b) => (b.data || "").localeCompare(a.data || ""));
+if (closerF) rows = rows.filter((r) => r.closer === closerF);
+  if (deF) rows = rows.filter((r) => r.data >= deF);
+  if (ateF) rows = rows.filter((r) => r.data <= ateF);
+  if (statusF) rows = rows.filter((r) => r.status === statusF);
+  if (tipoF === "concluida") rows = rows.filter((r) => r.status === "Realizada" || r.status === "Venda feita");
+  if (tipoF === "venda") rows = rows.filter((r) => r.status === "Venda feita");
+  if (tipoF === "followup") rows = rows.filter((r) => r.followUp && (!r.retornoData || parseDate(r.retornoData) >= new Date()));
+document.getElementById("total-registros").textContent = `${rows.length} registros`;
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="10" class="text-muted" style="text-align:center;padding:40px">Nenhuma reunião encontrada.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map((r) => {
+    const dataFmt = r.data ? r.data.split("-").reverse().join("/") : "—";
+    const retFmt = r.retornoData ? r.retornoData.split("-").reverse().join("/") : "—";
+    const stCls = "st-" + (r.status || "").replace(/\s+/g, "").toLowerCase();
+    const followHtml = r.followUp
+      ? `<span class="followup-badge" title="${esc(r.followUp)}">${esc(r.followUp)}</span>`
+      : `<span class="text-muted">—</span>`;
+    const retHtml = r.retornoData
+      ? `<span class="${parseDate(r.retornoData) < new Date() ? "followup-pending" : ""}">${retFmt}</span>`
+      : `<span class="text-muted">—</span>`;
+    return `<tr>
+      <td class="lead-cell"><strong>${esc(r.leadNome)}</strong><span>${esc(r.leadEmail || "—")}</span></td>
+      <td><span class="tag-temp temp-${r.leadTemp || "Morno"}">${r.leadTemp || "Morno"}</span></td>
+      <td>${dataFmt}</td>
+      <td>${esc(r.closer)}</td>
+      <td style="max-width:180px;font-size:.78rem">${esc(r.produto)}</td>
+      <td>${fmtMoney(r.valor)}</td>
+      <td><span class="${stCls}">${r.status}</span></td>
+      <td>${followHtml}</td>
+      <td>${retHtml}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-icon" onclick="editarReuniao('${r.id}')" title="Editar">✏</button>
+        <button class="btn-icon del" onclick="deletarReuniao('${r.id}')" title="Excluir">🗑</button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+// ==========================================
+// 10. MODAL REUNIÃO
+// ==========================================
+
+function renderizarClosersSelect() {
+  const sel = document.getElementById("reuniao-closer");
+  const val = sel.value;
+  sel.innerHTML = '<option value="">Selecione…</option>';
+  config.closers.forEach((c) => {
+    sel.innerHTML += `<option value="${esc(c)}" ${c === val ? "selected" : ""}>${esc(c)}</option>`;
+  });
+const filtro = document.getElementById("filtro-closer");
+  const fVal = filtro.value;
+  filtro.innerHTML = '<option value="">Todos closers</option>';
+  config.closers.forEach((c) => {
+    filtro.innerHTML += `<option value="${esc(c)}" ${c === fVal ? "selected" : ""}>${esc(c)}</option>`;
+  });
 }
 
 function renderizarProdutos() {
-    const pSelect = document.getElementById('reuniao-produto');
-    const prodAtual = pSelect.value;
-    pSelect.innerHTML = '<option value="">Selecione o Programa...</option>';
-    
-    PRODUTOS_B7.forEach(p => {
-        pSelect.innerHTML += `<option value="${p.nome}" data-val="${p.valor}" ${p.nome === prodAtual ? 'selected' : ''}>${p.nome} — R$ ${p.valor.toLocaleString('pt-BR')}</option>`;
-    });
+  const pSelect = document.getElementById("reuniao-produto");
+  const cur = pSelect.value;
+  pSelect.innerHTML = '<option value="">Selecione…</option>';
+  PRODUTOS_B7.forEach((p) => {
+    pSelect.innerHTML += `<option value="${esc(p.nome)}" data-val="${p.valor}" ${p.nome === cur ? "selected" : ""}>${esc(p.nome)} — ${fmtMoney(p.valor)}</option>`;
+  });
 }
 
 function atualizarValorProduto() {
-    const select = document.getElementById('reuniao-produto');
-    const opt = select.options[select.selectedIndex];
-    if (opt.value) {
-        document.getElementById('reuniao-valor').value = opt.getAttribute('data-val');
-    }
+  const sel = document.getElementById("reuniao-produto");
+  const opt = sel.options[sel.selectedIndex];
+  if (opt?.value) document.getElementById("reuniao-valor").value = opt.getAttribute("data-val");
 }
 
-// ==========================================
-// 8. CRUD DE REUNIÕES (FIREBASE STORE)
-// ==========================================
-function salvarReuniao(e) {
-    e.preventDefault();
-    const id = document.getElementById('reuniao-id').value;
-    
-    const dadosReuniao = {
-        leadNome: document.getElementById('lead-nome').value.trim(),
-        leadEmail: document.getElementById('lead-email').value.trim(),
-        leadTemp: document.getElementById('lead-temp').value,
-        data: document.getElementById('reuniao-data').value,
-        closer: document.getElementById('reuniao-closer').value,
-        produto: document.getElementById('reuniao-produto').value,
-        valor: parseFloat(document.getElementById('reuniao-valor').value) || 0,
-        status: document.getElementById('reuniao-status').value,
-        dataVenda: document.getElementById('venda-data').value || null,
-        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
-    };
+function abrirModalReuniao(isEdicao = false) {
+  document.getElementById("modal-reuniao-title").textContent = isEdicao ? "Editar reunião" : "Nova reunião";
+  if (!isEdicao) {
+    limparFormReuniao();
+    document.getElementById("reuniao-data").value = new Date().toISOString().split("T")[0];
+  }
+  renderizarClosersSelect();
+  renderizarProdutos();
+  document.getElementById("modal-reuniao").hidden = false;
+}
 
-    if (id) {
-        db.collection("reunioes_b7").doc(id).update(dadosReuniao);
-    } else {
-        db.collection("reunioes_b7").add(dadosReuniao);
+function fecharModalReuniao() {
+  document.getElementById("modal-reuniao").hidden = true;
+  limparFormReuniao();
+}
+
+function toggleDataVenda() {
+  const st = document.getElementById("reuniao-status").value;
+  const grp = document.getElementById("group-data-venda");
+  if (st === "Venda feita") {
+    grp.hidden = false;
+    if (!document.getElementById("venda-data").value) {
+      document.getElementById("venda-data").value = new Date().toISOString().split("T")[0];
     }
+  } else {
+    grp.hidden = true;
+    document.getElementById("venda-data").value = "";
+  }
+}
 
-    fecharModalReuniao();
+function salvarReuniao(e) {
+  e.preventDefault();
+  const id = document.getElementById("reuniao-id").value;
+  const dados = {
+    leadNome: document.getElementById("lead-nome").value.trim(),
+    leadEmail: document.getElementById("lead-email").value.trim(),
+    leadTemp: document.getElementById("lead-temp").value,
+    data: document.getElementById("reuniao-data").value,
+    closer: document.getElementById("reuniao-closer").value,
+    produto: document.getElementById("reuniao-produto").value,
+    valor: parseFloat(document.getElementById("reuniao-valor").value) || 0,
+    status: document.getElementById("reuniao-status").value,
+    dataVenda: document.getElementById("venda-data").value || null,
+    followUp: document.getElementById("reuniao-followup").value.trim() || null,
+    retornoData: document.getElementById("reuniao-retorno").value || null,
+    atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+if (id) db.collection("reunioes_b7").doc(id).update(dados);
+  else db.collection("reunioes_b7").add(dados);
+  fecharModalReuniao();
 }
 
 function editarReuniao(id) {
-    const r = listaReunioes.find(item => item.id === id);
-    if (!r) return;
-
-    abrirModalReuniao(true);
-    
-    document.getElementById('reuniao-id').value = r.id;
-    document.getElementById('lead-nome').value = r.leadNome || "";
-    document.getElementById('lead-email').value = r.leadEmail || "";
-    document.getElementById('lead-temp').value = r.leadTemp || "Morno";
-    document.getElementById('reuniao-data').value = r.data || "";
-    document.getElementById('reuniao-closer').value = r.closer || "";
-    document.getElementById('reuniao-produto').value = r.produto || "";
-    document.getElementById('reuniao-valor').value = r.valor || 0;
-    document.getElementById('reuniao-status').value = r.status || "Agendada";
-    
-    toggleDataVenda();
-    if (r.dataVenda) document.getElementById('venda-data').value = r.dataVenda;
+  const r = listaReunioes.find((x) => x.id === id);
+  if (!r) return;
+  abrirModalReuniao(true);
+  document.getElementById("reuniao-id").value = r.id;
+  document.getElementById("lead-nome").value = r.leadNome || "";
+  document.getElementById("lead-email").value = r.leadEmail || "";
+  document.getElementById("lead-temp").value = r.leadTemp || "Morno";
+  document.getElementById("reuniao-data").value = r.data || "";
+  document.getElementById("reuniao-closer").value = r.closer || "";
+  document.getElementById("reuniao-produto").value = r.produto || "";
+  document.getElementById("reuniao-valor").value = r.valor || 0;
+  document.getElementById("reuniao-status").value = r.status || "Agendada";
+  document.getElementById("reuniao-followup").value = r.followUp || "";
+  document.getElementById("reuniao-retorno").value = r.retornoData || "";
+  toggleDataVenda();
+  if (r.dataVenda) document.getElementById("venda-data").value = r.dataVenda;
 }
-
 function deletarReuniao(id) {
-    if (confirm("Remover este lead definitivamente da nuvem?")) {
-        db.collection("reunioes_b7").doc(id).delete();
-    }
+  if (confirm("Excluir esta reunião permanentemente?")) {
+    db.collection("reunioes_b7").doc(id).delete();
+  }
 }
-
 function limparFormReuniao() {
-    document.getElementById('form-reuniao').reset();
-    document.getElementById('reuniao-id').value = "";
-    toggleDataVenda();
-}
-
-function renderizarTabela() {
-    const tbody = document.getElementById('lista-reunioes');
-    tbody.innerHTML = '';
-    
-    const sorted = [...listaReunioes].sort((a, b) => new Date(b.data) - new Date(a.data));
-    document.getElementById('total-registros').innerText = `${sorted.length} registros`;
-
-    if (sorted.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted" style="padding:40px;">Nenhuma reunião agendada. Clique em "+ Novo Agendamento" para começar!</td></tr>`;
-        return;
-    }
-
-    sorted.forEach(r => {
-        const dataCall = r.data ? r.data.split('-').reverse().join('/') : '-';
-        const dataVd = r.dataVenda ? r.dataVenda.split('-').reverse().join('/') : '—';
-        const valFmt = (r.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        const emailExibido = r.leadEmail || "Sem e-mail cadastrado";
-        
-        tbody.innerHTML += `
-            <tr>
-                <td>
-                    <div style="font-weight:600; font-size: 0.9rem; color: var(--text-main);">${r.leadNome}</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">${emailExibido}</div>
-                </td>
-                <td><span class="tag-temp temp-${r.leadTemp}">${r.leadTemp || 'Morno'}</span></td>
-                <td style="font-weight:500;">${dataCall}</td>
-                
-                <!-- NOVO VISUAL DO CLOSER: Limpo, sem caixa preta e com ícone destacado -->
-                <td>
-                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--text-main); font-size: 0.85rem;">
-                        <span style="color: var(--accent); font-size: 0.95rem;">👤</span> ${r.closer}
-                    </div>
-                </td>
-
-                <td style="font-weight: 500; color: var(--text-main);">${r.produto}</td>
-                <td style="font-weight: 600; color: var(--accent);">R$ ${valFmt}</td>
-                <td><span class="status-${r.status.replace(/\s+/g, '')}">${r.status}</span></td>
-                <td style="color:${r.dataVenda ? 'var(--success-light)' : 'var(--text-dark)'}; font-weight:${r.dataVenda ? '600' : 'normal'};">${dataVd}</td>
-                <td style="text-align:right; white-space:nowrap;">
-                    <button type="button" class="btn-icon" onclick="editarReuniao('${r.id}')" title="Editar">✏️</button>
-                    <button type="button" class="btn-icon del" onclick="deletarReuniao('${r.id}')" title="Excluir">🗑️</button>
-                </td>
-            </tr>
-        `;
-    });
+  document.getElementById("form-reuniao").reset();
+  document.getElementById("reuniao-id").value = "";
+  document.getElementById("group-data-venda").hidden = true;
 }
 
 // ==========================================
-// 9. CÁLCULO DE DATAS E DASHBOARD SINCRONIZADO
+// 11. BÔNUS
 // ==========================================
-function getDatesInfo(dateStr) {
-    if (!dateStr) return { isHoje: false, isSemana: false, isMes: false };
-    
-    // Converte de forma precisa sem interferência de fuso horário
-    const partes = dateStr.split('-');
-    const d = new Date(partes[0], partes[1] - 1, partes[2]);
-    
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
 
-    const isHoje = d.getTime() === hoje.getTime();
-
-    // Domingo da semana atual até Sábado
-    const primDia = new Date(hoje);
-    primDia.setDate(hoje.getDate() - hoje.getDay());
-    const ultDia = new Date(primDia);
-    ultDia.setDate(primDia.getDate() + 6);
-    const isSemana = d >= primDia && d <= ultDia;
-
-    const isMes = d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
-
-    return { isHoje, isSemana, isMes };
+function abrirModalBonus() {
+  renderizarListaBonusModal();
+  document.getElementById("modal-bonus").hidden = false;
+}
+function fecharModalBonus() {
+  document.getElementById("modal-bonus").hidden = true;
+}
+function adicionarBonus(e) {
+  e.preventDefault();
+  const desc = document.getElementById("novo-bonus-desc").value.trim();
+  const val = parseFloat(document.getElementById("novo-bonus-val").value);
+  if (desc && val) {
+    db.collection("bonus_sdr").add({ desc, val }).then(() => {
+      document.getElementById("novo-bonus-desc").value = "";
+      document.getElementById("novo-bonus-val").value = "";
+    });
+  }
 }
 
-function calcularDashboard() {
-    let comissaoVendas = 0;
-    let faturamentoMes = 0;
+function removerBonus(id) { db.collection("bonus_sdr").doc(id).delete(); }
 
-    let diaAg = 0, diaRe = 0;
-    let semAg = 0, semRe = 0;
-    let mesAg = 0, mesRe = 0;
+function renderizarListaBonusModal() {
+  const container = document.getElementById("lista-bonus-container");
+  let total = 0;
+  if (!listaBonus.length) {
+    container.innerHTML = `<span class="text-muted text-sm" style="padding:12px">Nenhum bônus cadastrado.</span>`;
+  } else {
+    container.innerHTML = listaBonus.map((b) => {
+      total += b.val || 0;
+      return `<div class="bonus-item">
+        <div><strong>${esc(b.desc)}</strong><div class="text-sm" style="color:var(--green)">${fmtMoney(b.val)}</div></div>
+        <button class="btn-icon del" onclick="removerBonus('${b.id}')" type="button">🗑</button>
+      </div>`;
+    }).join("");
+  }
+  document.getElementById("modal-bonus-total-preview").textContent = fmtMoney(total);
+}
 
-    listaReunioes.forEach(r => {
-        const dCall = getDatesInfo(r.data);
-        
-        // Agendamentos (Contabiliza para todas as metas de esforço do SDR)
-        if (r.status !== "Cancelada") {
-            if (dCall.isHoje) diaAg++;
-            if (dCall.isSemana) semAg++;
-            if (dCall.isMes) mesAg++;
-        }
+// ==========================================
+// 12.CONFIGURAÇÕES UI
+// ==========================================
 
-        // Realizadas
-        if (r.status === "Realizada" || r.status === "Venda feita") {
-            if (dCall.isHoje) diaRe++;
-            if (dCall.isSemana) semRe++;
-            if (dCall.isMes) mesRe++;
-        }
+function renderConfigForm() {
+  const g = config.goals;
+  document.getElementById("form-metas").innerHTML = `
+    <label>Diária — agendadas</label><input type="number" id="cfg-daily-ag" value="${g.dailyAg}">
+    <label>Diária — realizadas</label><input type="number" id="cfg-daily-re" value="${g.dailyRe}">
+    <label>Semanal — agendadas</label><input type="number" id="cfg-weekly-ag" value="${g.weeklyAg}">
+    <label>Semanal — realizadas</label><input type="number" id="cfg-weekly-re" value="${g.weeklyRe}">
+    <label>Mensal — agendadas</label><input type="number" id="cfg-monthly-ag" value="${g.monthlyAg}">
+    <label>Mensal — realizadas</label><input type="number" id="cfg-monthly-re" value="${g.monthlyRe}">`;
+document.getElementById("cfg-meta-vendas").value = g.salesTarget;
+  document.getElementById("cfg-comissao").value = (config.commissionRate * 100).toFixed(2);
+  document.getElementById("cfg-min-realizadas").value = g.minRealizadas;
+const list = document.getElementById("closers-config-list");
+  list.innerHTML = config.closers.map((c, i) => `
+    <div class="closer-row">
+      <input type="text" value="${esc(c)}" data-idx="${i}">
+      <button class="btn-icon del" onclick="removerCloserConfig(${i})" type="button">×</button>
+    </div>`).join("");
+}
 
-        // Faturamento e Comissão (Com base na data de fechamento da venda)
-        if (r.status === "Venda feita") {
-            const dVenda = getDatesInfo(r.dataVenda || r.data);
-            if (dVenda.isMes) {
-                faturamentoMes += (r.valor || 0);
-                comissaoVendas += (r.valor || 0) * 0.0075;
-            }
-        }
-    });
-
-    // Calcula total da comissão (Vendas + Soma de todos os bônus ativos)
-    let totalBonusVal = listaBonus.reduce((acc, item) => acc + item.val, 0);
-    const comissaoTotal = comissaoVendas + totalBonusVal;
-
-    // Atualiza KPIs Topo
-    document.getElementById('dash-comissao-total').innerText = `R$ ${comissaoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    document.getElementById('dash-faturamento').innerText = `R$ ${faturamentoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    
-    const pctVendas = Math.min((faturamentoMes / 600000) * 100, 100).toFixed(1);
-    document.getElementById('dash-pct-vendas').innerText = `${pctVendas}% da meta mensal`;
-    document.getElementById('bar-faturamento').style.width = `${pctVendas}%`;
-
-    // Atualiza Metas Diárias com Barras e Porcentagens
-    document.getElementById('dia-ag').innerText = diaAg;
-    document.getElementById('dia-re').innerText = diaRe;
-    const pctDiaAg = Math.min((diaAg / 12) * 100, 100).toFixed(0);
-    const pctDiaRe = Math.min((diaRe / 6) * 100, 100).toFixed(0);
-    document.getElementById('pct-dia-ag').innerText = `${pctDiaAg}%`;
-    document.getElementById('pct-dia-re').innerText = `${pctDiaRe}%`;
-    document.getElementById('bar-dia-ag').style.width = `${pctDiaAg}%`;
-    document.getElementById('bar-dia-re').style.width = `${pctDiaRe}%`;
-
-    // Atualiza Metas Semanais com Barras e Porcentagens
-    document.getElementById('sem-ag').innerText = semAg;
-    document.getElementById('sem-re').innerText = semRe;
-    const pctSemAg = Math.min((semAg / 60) * 100, 100).toFixed(0);
-    const pctSemRe = Math.min((semRe / 30) * 100, 100).toFixed(0);
-    document.getElementById('pct-sem-ag').innerText = `${pctSemAg}%`;
-    document.getElementById('pct-sem-re').innerText = `${pctSemRe}%`;
-    document.getElementById('bar-sem-ag').style.width = `${pctSemAg}%`;
-    document.getElementById('bar-sem-re').style.width = `${pctSemRe}%`;
-
-    // Atualiza Metas Mensais com Barras e Porcentagens
-    document.getElementById('mes-ag').innerText = mesAg;
-    document.getElementById('mes-re').innerText = mesRe;
-    const pctMesAg = Math.min((mesAg / 240) * 100, 100).toFixed(0);
-    const pctMesRe = Math.min((mesRe / 100) * 100, 100).toFixed(0);
-    document.getElementById('pct-mes-ag').innerText = `${pctMesAg}%`;
-    document.getElementById('pct-mes-re').innerText = `${pctMesRe}%`;
-    document.getElementById('bar-mes-ag').style.width = `${pctMesAg}%`;
-    document.getElementById('bar-mes-re').style.width = `${pctMesRe}%`;
-
-    // Validador do Gatilho da Comissão (100 Realizadas)
-    const statusComissao = document.getElementById('status-comissao');
-    const msgGatilho = document.getElementById('msg-gatilho');
-    
-    if (mesRe >= 100) {
-        statusComissao.className = "badge badge-success";
-        statusComissao.innerText = "🏆 COMISSÃO MENSAL ATIVADA (100+ Realizadas)";
-        msgGatilho.innerText = "Gatilho atingido! Comissão liberada para pagamento.";
-        msgGatilho.style.color = "var(--success-light)";
-    } else {
-        const faltam = 100 - mesRe;
-        statusComissao.className = "badge badge-warning";
-        statusComissao.innerText = `⚠️ Falta(m) ${faltam} realizada(s) para ativar comissão`;
-        msgGatilho.innerText = `Meta mínima: 100 realizadas. Faltam ${faltam}.`;
-        msgGatilho.style.color = "var(--text-muted)";
-    }
+function adicionarCloserConfig() {
+  config.closers.push("Novo Closer");
+  renderConfigForm();
+}
+function removerCloserConfig(idx) {
+  if (config.closers.length <= 1) return;
+  config.closers.splice(idx, 1);
+  renderConfigForm();
+}
+// ==========================================
+// 13.RENDER GERAL
+// ==========================================
+function renderizarTudo() {
+  renderizarClosersSelect();
+  renderizarDashboard();
+  renderizarTabela();
+  if (!document.getElementById("modal-bonus").hidden) renderizarListaBonusModal();
 }
