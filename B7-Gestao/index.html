@@ -121,22 +121,31 @@
                     <h3>Comissão & Bônus</h3>
                     <button class="btn btn-ghost btn-sm" onclick="abrirModalBonus()" type="button">Gerenciar bônus</button>
                 </div>
-                <div class="commission-grid">
-                    <div class="commission-item">
-                        <span class="commission-label">Comissão sobre vendas</span>
-                        <span class="commission-val" id="val-comissao-vendas">R$ 0,00</span>
-                        <span class="text-muted text-xs" id="val-taxa-comissao">Taxa: 0,75%</span>
-                    </div>
-                    <div class="commission-item">
-                        <span class="commission-label">Bônus & campanhas</span>
-                        <span class="commission-val accent" id="val-bonus-total">R$ 0,00</span>
-                        <span class="text-muted text-xs" id="val-bonus-count">0 bônus ativos</span>
-                    </div>
-                    <div class="commission-item total">
-                        <span class="commission-label">Total a receber</span>
-                        <span class="commission-val gold" id="val-total-final">R$ 0,00</span>
-                    </div>
-                </div>
+                <div class="commission-grid" style="grid-template-columns: repeat(2, 1fr);">
+
+    <div class="commission-item">
+        <span class="commission-label">Comissão sobre vendas</span>
+        <span class="commission-val" id="val-comissao-vendas">R$ 0,00</span>
+        <span class="text-muted text-xs" id="val-taxa-comissao">Taxa: 0,00%</span>
+    </div>
+
+    <div class="commission-item">
+        <span class="commission-label">Bônus por reuniões</span>
+        <span class="commission-val accent" id="val-comissao-reunioes">R$ 0,00</span>
+        <span class="text-muted text-xs" id="val-qtd-reunioes">0 reuniões (R$ 30/cada)</span>
+    </div>
+    
+    <div class="commission-item">
+        <span class="commission-label">Bônus & campanhas</span>
+        <span class="commission-val accent" id="val-bonus-total">R$ 0,00</span>
+        <span class="text-muted text-xs" id="val-bonus-count">0 bônus ativos</span>
+    </div>
+    
+    <div class="commission-item total">
+        <span class="commission-label">Total a receber</span>
+        <span class="commission-val gold" id="val-total-final">R$ 0,00</span>
+    </div>
+</div>
                 <div id="bonus-preview-list" class="bonus-preview"></div>
                 <div id="status-comissao" class="status-banner warning">Aguardando meta de realizadas</div>
             </div>

@@ -95,19 +95,29 @@ function realizarLogout() { auth.signOut(); }
 // ==========================================
 
 function iniciarSyncNuvem() {
-    db.collection("reunioes_b7").onSnapshot((snap) => {
-    listaReunioes = [];
-    snap.forEach((doc) => listaReunioes.push({ id: doc.id, ...doc.data() }));
-    renderizarTudo();
-  });
+  const user = auth.currentUser;
+  if (!user) return; // Garante que o usuário está logado
+
+  db.collection("reunioes_b7")
+    .where("userId", "==", user.uid) // Filtra apenas as reuniões do SDR logado
+    .onSnapshot((snap) => {
+      listaReunioes = [];
+      snap.forEach((doc) => listaReunioes.push({ id: doc.id, ...doc.data() }));
+      renderizarTudo();
+    });
 }
 
 function carregarBonus() {
-    db.collection("bonus_sdr").onSnapshot((snap) => {
-    listaBonus = [];
-    snap.forEach((doc) => listaBonus.push({ id: doc.id, ...doc.data() }));
-    renderizarTudo();
-  });
+  const user = auth.currentUser;
+  if (!user) return;
+
+  db.collection("bonus_sdr")
+    .where("userId", "==", user.uid) // Filtra apenas os bônus do SDR logado
+    .onSnapshot((snap) => {
+      listaBonus = [];
+      snap.forEach((doc) => listaBonus.push({ id: doc.id, ...doc.data() }));
+      renderizarTudo();
+    });
 }
 
 function carregarConfig() {
@@ -201,7 +211,7 @@ function wireFilters() {
 }
 
 // ==========================================
-// DATAS & PERÍODOS
+// 6. DATAS & PERÍODOS
 // ==========================================
 
 function parseDate(str) {
@@ -255,7 +265,7 @@ function esc(s) {
 }
 
 // ==========================================
-// 8. DASHBOARD
+// 7. DASHBOARD
 // ==========================================
 
 function renderizarDashboard() {
@@ -319,12 +329,17 @@ document.getElementById("kpi-row").innerHTML = `
     <tr><td>Taxa show (realizadas ÷ decisão)</td><td colspan="2"><strong>${pctShow}%</strong></td></tr>
     <tr><td>Taxa conversão (vendas ÷ decisão)</td><td colspan="2"><strong>${pctConv}%</strong></td></tr>`;
   renderRanking(from, to);
-  const taxa = config.commissionRate;
+  const taxa = faturamento > 250000 ? 0.0075 : 0.005; 
   const comissaoVendas = faturamento * taxa;
+  const comissaoReunioes = re * 30; 
   const totalBonus = listaBonus.reduce((a, b) => a + (b.val || 0), 0);
-  const totalFinal = comissaoVendas + totalBonus;
+  const totalFinal = comissaoVendas + comissaoReunioes + totalBonus;
   document.getElementById("val-comissao-vendas").textContent = fmtMoney(comissaoVendas);
   document.getElementById("val-taxa-comissao").textContent = `Taxa: ${(taxa * 100).toFixed(2)}% sobre vendas`;
+  const elReunioes = document.getElementById("val-comissao-reunioes");
+  if (elReunioes) elReunioes.textContent = fmtMoney(comissaoReunioes);
+  const elQtdReunioes = document.getElementById("val-qtd-reunioes");
+  if (elQtdReunioes) elQtdReunioes.textContent = `${re} realizadas (R$ 30/cada)`;
   document.getElementById("val-bonus-total").textContent = fmtMoney(totalBonus);
   document.getElementById("val-bonus-count").textContent = `${listaBonus.length} bônus ativo(s)`;
   document.getElementById("val-total-final").textContent = fmtMoney(totalFinal);
@@ -334,14 +349,16 @@ document.getElementById("kpi-row").innerHTML = `
     : `<span class="text-muted text-sm">Nenhum bônus cadastrado.</span>`;
   const mesFrom = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
   const mesTo = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0);
-  const mesRe = reunioesNoPeriodo(mesFrom, mesTo).filter((r) => r.status === "Realizada" || r.status === "Venda feita").length;
+  const reunioesMes = reunioesNoPeriodo(mesFrom, mesTo);
+  const mesRe = reunioesMes.filter((r) => r.status === "Realizada" || r.status === "Venda feita").length;
+  const mesAg = reunioesMes.filter((r) => r.status !== "Cancelada").length; 
   const banner = document.getElementById("status-comissao");
-  if (mesRe >= g.minRealizadas) {
+  if (mesAg >= 100 && mesRe >= 50) {
     banner.className = "status-banner success";
-    banner.textContent = `Comissão liberada — ${mesRe} realizadas no mês (mín. ${g.minRealizadas})`;
+    banner.textContent = `🏆 Comissão liberada! ${mesAg} agendadas e ${mesRe} realizadas no mês.`;
   } else {
     banner.className = "status-banner warning";
-    banner.textContent = `Faltam ${g.minRealizadas - mesRe} realizadas para liberar comissão (${mesRe}/${g.minRealizadas})`;
+    banner.textContent = `⚠️ Meta p/ liberar: 100 agend. (tem ${mesAg}) e 50 real. (tem ${mesRe}).`;
   }
 }
 
@@ -370,7 +387,7 @@ function renderRanking(from, to) {
 }
 
 // ==========================================
-// 9. REUNIÕES — TABELA & FILTROS
+// 8. REUNIÕES — TABELA & FILTROS
 // ==========================================
 
 function renderizarTabela() {
@@ -422,7 +439,7 @@ document.getElementById("total-registros").textContent = `${rows.length} registr
 }
 
 // ==========================================
-// 10. MODAL REUNIÃO
+// 9. MODAL REUNIÃO
 // ==========================================
 
 function renderizarClosersSelect() {
@@ -487,8 +504,15 @@ function toggleDataVenda() {
 
 function salvarReuniao(e) {
   e.preventDefault();
+  const user = auth.currentUser;
+  if (!user) {
+    alert("Erro: Usuário não autenticado.");
+    return;
+  }
+
   const id = document.getElementById("reuniao-id").value;
   const dados = {
+    userId: user.uid,
     leadNome: document.getElementById("lead-nome").value.trim(),
     leadEmail: document.getElementById("lead-email").value.trim(),
     leadTemp: document.getElementById("lead-temp").value,
@@ -502,8 +526,12 @@ function salvarReuniao(e) {
     retornoData: document.getElementById("reuniao-retorno").value || null,
     atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
   };
-if (id) db.collection("reunioes_b7").doc(id).update(dados);
-  else db.collection("reunioes_b7").add(dados);
+
+  if (id) {
+    db.collection("reunioes_b7").doc(id).update(dados);
+  } else {
+    db.collection("reunioes_b7").add(dados);
+  }
   fecharModalReuniao();
 }
 
@@ -537,7 +565,7 @@ function limparFormReuniao() {
 }
 
 // ==========================================
-// 11. BÔNUS
+// 10. BÔNUS
 // ==========================================
 
 function abrirModalBonus() {
@@ -549,10 +577,12 @@ function fecharModalBonus() {
 }
 function adicionarBonus(e) {
   e.preventDefault();
+  const user = auth.currentUser;
   const desc = document.getElementById("novo-bonus-desc").value.trim();
   const val = parseFloat(document.getElementById("novo-bonus-val").value);
-  if (desc && val) {
-    db.collection("bonus_sdr").add({ desc, val }).then(() => {
+  
+  if (desc && val && user) {
+    db.collection("bonus_sdr").add({ userId: user.uid, desc, val }).then(() => {
       document.getElementById("novo-bonus-desc").value = "";
       document.getElementById("novo-bonus-val").value = "";
     });
@@ -579,7 +609,7 @@ function renderizarListaBonusModal() {
 }
 
 // ==========================================
-// 12.CONFIGURAÇÕES UI
+// 11. CONFIGURAÇÕES UI
 // ==========================================
 
 function renderConfigForm() {
@@ -612,7 +642,7 @@ function removerCloserConfig(idx) {
   renderConfigForm();
 }
 // ==========================================
-// 13.RENDER GERAL
+// 12.RENDER GERAL
 // ==========================================
 function renderizarTudo() {
   renderizarClosersSelect();
