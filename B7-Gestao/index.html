@@ -165,24 +165,26 @@
             </header>
 
             <div class="filters-bar">
+                <div class="period-nav period-nav--inline">
+                    <button class="btn btn-ghost btn-sm" id="agenda-nav-prev" type="button">←</button>
+                    <select id="agenda-period-type">
+                        <option value="day">Diário</option>
+                        <option value="week">Semanal</option>
+                        <option value="month" selected>Mensal</option>
+                    </select>
+                    <span id="agenda-period-label" class="period-label">—</span>
+                    <button class="btn btn-ghost btn-sm" id="agenda-nav-next" type="button">→</button>
+                    <button class="btn btn-ghost btn-sm" id="agenda-nav-today" type="button">Hoje</button>
+                </div>
                 <select id="filtro-closer"><option value="">Todos closers</option></select>
-                <input type="date" id="filtro-data-de" title="Data de">
-                <input type="date" id="filtro-data-ate" title="Data até">
                 <select id="filtro-status">
                     <option value="">Todas situações</option>
                     <option value="Agendada">Agendada</option>
-                    <option value="Realizada">Realizada (concluída)</option>
-                    <option value="Venda feita">Venda realizada</option>
+                    <option value="Realizada">Realizada</option>
+                    <option value="Venda feita">Venda feita</option>
                     <option value="No show">No show</option>
                     <option value="Cancelada">Cancelada</option>
                 </select>
-                <select id="filtro-tipo">
-                    <option value="">Todos tipos</option>
-                    <option value="concluida">Reunião concluída</option>
-                    <option value="venda">Venda realizada</option>
-                    <option value="followup">Com follow-up pendente</option>
-                </select>
-                <button class="btn btn-ghost btn-sm" id="limpar-filtros" type="button">Limpar</button>
             </div>
 
             <div class="panel panel-flush">
@@ -193,12 +195,12 @@
                                 <th>Lead</th>
                                 <th>Temp.</th>
                                 <th>Data</th>
+                                <th>Horário</th>
+                                <th>Marcada em</th>
                                 <th>Closer</th>
                                 <th>Produto</th>
                                 <th>Valor</th>
                                 <th>Situação</th>
-                                <th>Follow-up</th>
-                                <th>Retorno</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -213,27 +215,14 @@
             <header class="view-header">
                 <div>
                     <h1>Configurações</h1>
-                    <p class="text-muted">Metas, closers e comissão — ajuste conforme mudanças da empresa</p>
+                    <p class="text-muted">Metas de reuniões e closers</p>
                 </div>
                 <button class="btn btn-gold" onclick="salvarConfig()" type="button">Salvar alterações</button>
             </header>
 
-            <div class="grid-2">
-                <div class="panel">
-                    <h3>Metas de reuniões</h3>
-                    <div class="config-form" id="form-metas"></div>
-                </div>
-                <div class="panel">
-                    <h3>Comissão & meta de vendas</h3>
-                    <div class="config-form">
-                        <label>Meta de vendas (R$)</label>
-                        <input type="number" id="cfg-meta-vendas" step="1000">
-                        <label>Taxa de comissão (%)</label>
-                        <input type="number" id="cfg-comissao" step="0.01" min="0" max="100">
-                        <label>Realizadas mínimas p/ liberar comissão</label>
-                        <input type="number" id="cfg-min-realizadas" step="1">
-                    </div>
-                </div>
+            <div class="panel">
+                <h3>Metas de reuniões</h3>
+                <div class="config-form" id="form-metas"></div>
             </div>
 
             <div class="panel">
@@ -267,6 +256,7 @@
                     </select>
                 </div>
                 <div><label>Data da reunião</label><input type="date" id="reuniao-data" required></div>
+                <div><label>Horário</label><input type="time" id="reuniao-hora" value="10:00" required></div>
                 <div><label>Closer</label><select id="reuniao-closer" required></select></div>
                 <div><label>Produto / Formação</label><select id="reuniao-produto" onchange="atualizarValorProduto()" required></select></div>
                 <div><label>Valor (R$)</label><input type="number" id="reuniao-valor" step="0.01" required></div>
@@ -280,8 +270,6 @@
                     </select>
                 </div>
                 <div id="group-data-venda" hidden><label>Data da venda</label><input type="date" id="venda-data"></div>
-                <div class="span-2"><label>Follow-up</label><textarea id="reuniao-followup" rows="2" placeholder="Observações para segunda reunião ou retorno…"></textarea></div>
-                <div><label>Data de retorno</label><input type="date" id="reuniao-retorno"></div>
             </div>
             <div class="modal-foot">
                 <button type="button" class="btn btn-ghost" onclick="fecharModalReuniao()">Cancelar</button>
@@ -298,9 +286,10 @@
             <h3>Bônus & campanhas</h3>
             <button class="btn-icon" onclick="fecharModalBonus()" type="button">×</button>
         </div>
-        <p class="text-muted text-sm">Bônus são somados à comissão sobre vendas.</p>
+        <p class="text-muted text-sm">Bônus vinculados ao mês da data informada.</p>
         <form onsubmit="adicionarBonus(event)" class="bonus-add-form">
             <input type="text" id="novo-bonus-desc" placeholder="Descrição da campanha" required>
+            <input type="date" id="novo-bonus-data" required>
             <input type="number" id="novo-bonus-val" step="0.01" placeholder="Valor R$" required>
             <button type="submit" class="btn btn-gold">+</button>
         </form>

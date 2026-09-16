@@ -49,6 +49,11 @@ let periodType = "month";
 let refDate = new Date();
 refDate.setHours(0, 0, 0, 0);
 
+// Navegação da aba reuniões
+let agendaPeriodType = "month";
+let agendaRefDate = new Date();
+agendaRefDate.setHours(0, 0, 0, 0);
+
 // ==========================================
 // 3. AUTH
 // ==========================================
@@ -72,6 +77,7 @@ function abrirSistema(user) {
   carregarConfig();
   wireNavigation();
   wirePeriodNav();
+  wireAgendaPeriodNav();
   wireFilters();
 }
 
@@ -136,10 +142,6 @@ function carregarConfig() {
 }
 
 function salvarConfig() {
-  config.goals.salesTarget = parseFloat(document.getElementById("cfg-meta-vendas").value) || 600000;
-  config.commissionRate = (parseFloat(document.getElementById("cfg-comissao").value) || 0.75) / 100;
-  config.goals.minRealizadas = parseInt(document.getElementById("cfg-min-realizadas").value) || 100;
-
   const metaFields = [
     ["dailyAg", "cfg-daily-ag"], ["dailyRe", "cfg-daily-re"],
     ["weeklyAg", "cfg-weekly-ag"], ["weeklyRe", "cfg-weekly-re"],
@@ -196,18 +198,33 @@ function navigatePeriod(dir) {
   renderizarDashboard();
 }
 
-function wireFilters() {
-  ["filtro-closer", "filtro-data-de", "filtro-data-ate", "filtro-status", "filtro-tipo"].forEach((id) => {
-    document.getElementById(id).addEventListener("change", renderizarTabela);
-  });
-  document.getElementById("limpar-filtros").onclick = () => {
-    document.getElementById("filtro-closer").value = "";
-    document.getElementById("filtro-data-de").value = "";
-    document.getElementById("filtro-data-ate").value = "";
-    document.getElementById("filtro-status").value = "";
-    document.getElementById("filtro-tipo").value = "";
+function wireAgendaPeriodNav() {
+  document.getElementById("agenda-period-type").onchange = (e) => {
+    agendaPeriodType = e.target.value;
     renderizarTabela();
   };
+  document.getElementById("agenda-nav-prev").onclick = () => navigateAgendaPeriod(-1);
+  document.getElementById("agenda-nav-next").onclick = () => navigateAgendaPeriod(1);
+  document.getElementById("agenda-nav-today").onclick = () => {
+    agendaRefDate = new Date();
+    agendaRefDate.setHours(0, 0, 0, 0);
+    renderizarTabela();
+  };
+}
+
+function navigateAgendaPeriod(dir) {
+  const d = new Date(agendaRefDate);
+  if (agendaPeriodType === "day") d.setDate(d.getDate() + dir);
+  else if (agendaPeriodType === "week") d.setDate(d.getDate() + dir * 7);
+  else d.setMonth(d.getMonth() + dir);
+  agendaRefDate = d;
+  renderizarTabela();
+}
+
+function wireFilters() {
+  ["filtro-closer", "filtro-status"].forEach((id) => {
+    document.getElementById(id).addEventListener("change", renderizarTabela);
+  });
 }
 
 // ==========================================
@@ -220,21 +237,21 @@ function parseDate(str) {
   return new Date(y, m - 1, d);
 }
 
-function fmtBR(date) {
-  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: periodType === "month" ? "numeric" : undefined });
+function fmtBR(date, type = periodType) {
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: type === "month" ? "numeric" : undefined });
 }
 
-function getPeriodRange() {
-  const d = new Date(refDate);
-  if (periodType === "day") {
-    return { from: d, to: d, label: fmtBR(d) };
+function getPeriodRangeFor(ref, type) {
+  const d = new Date(ref);
+  if (type === "day") {
+    return { from: d, to: d, label: fmtBR(d, type) };
   }
-  if (periodType === "week") {
+  if (type === "week") {
     const from = new Date(d);
     from.setDate(d.getDate() - d.getDay());
     const to = new Date(from);
     to.setDate(from.getDate() + 6);
-    return { from, to, label: `${fmtBR(from)} — ${fmtBR(to)}` };
+    return { from, to, label: `${fmtBR(from, type)} — ${fmtBR(to, type)}` };
   }
   const from = new Date(d.getFullYear(), d.getMonth(), 1);
   const to = new Date(d.getFullYear(), d.getMonth() + 1, 0);
@@ -242,6 +259,14 @@ function getPeriodRange() {
     from, to,
     label: d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }),
   };
+}
+
+function getPeriodRange() {
+  return getPeriodRangeFor(refDate, periodType);
+}
+
+function getAgendaPeriodRange() {
+  return getPeriodRangeFor(agendaRefDate, agendaPeriodType);
 }
 
 function inPeriod(dateStr, from, to) {
@@ -254,6 +279,36 @@ function inPeriod(dateStr, from, to) {
 
 function reunioesNoPeriodo(from, to) {
   return listaReunioes.filter((r) => inPeriod(r.data, from, to));
+}
+
+function reunioesCriadasNoPeriodo(from, to) {
+  return listaReunioes.filter((r) => inPeriod(getCriadoEm(r), from, to));
+}
+
+function vendasNoPeriodo(from, to) {
+  return listaReunioes.filter((r) => r.status === "Venda feita" && inPeriod(r.dataVenda || r.data, from, to));
+}
+
+function bonusNoPeriodo(from, to) {
+  return listaBonus.filter((b) => b.data && inPeriod(b.data, from, to));
+}
+
+function getCriadoEm(r) {
+  if (r.criadoEm) return r.criadoEm;
+  if (r.atualizadoEm?.toDate) {
+    const d = r.atualizadoEm.toDate();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  return r.data || "";
+}
+
+function isoToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function fmtHora(hora) {
+  return hora ? hora.slice(0, 5) : "—";
 }
 
 function fmtMoney(v) {
@@ -269,31 +324,42 @@ function esc(s) {
 // ==========================================
 
 function renderizarDashboard() {
-    const { from, to, label } = getPeriodRange();
+  const { from, to, label } = getPeriodRange();
   document.getElementById("period-label").textContent = label;
-    const g = config.goals;
-    const items = reunioesNoPeriodo(new Date(from), new Date(to));
-  let ag = 0, re = 0, noShow = 0, vendas = 0, faturamento = 0;
-  items.forEach((r) => {
-    if (r.status !== "Cancelada") ag++;
+  const g = config.goals;
+  const fromD = new Date(from);
+  const toD = new Date(to);
+
+  const criadas = reunioesCriadasNoPeriodo(fromD, toD);
+  const paraAcontecer = reunioesNoPeriodo(fromD, toD).filter((r) => r.status !== "Cancelada");
+
+  let re = 0, noShow = 0;
+  paraAcontecer.forEach((r) => {
     if (r.status === "Realizada" || r.status === "Venda feita") re++;
     if (r.status === "No show") noShow++;
-    if (r.status === "Venda feita") {
-      vendas++;
-      const dv = parseDate(r.dataVenda || r.data);
-      if (dv && inPeriod(r.dataVenda || r.data, new Date(from), new Date(to))) {
-        faturamento += r.valor || 0;
-      }
-    }
   });
+
+  const vendasPeriodo = vendasNoPeriodo(fromD, toD);
+  const vendas = vendasPeriodo.length;
+  const faturamento = vendasPeriodo.reduce((a, r) => a + (r.valor || 0), 0);
+
   const metaAg = periodType === "day" ? g.dailyAg : periodType === "week" ? g.weeklyAg : g.monthlyAg;
   const metaRe = periodType === "day" ? g.dailyRe : periodType === "week" ? g.weeklyRe : g.monthlyRe;
-document.getElementById("kpi-row").innerHTML = `
+  const lblCriadas = periodType === "day" ? "Marcadas hoje" : periodType === "week" ? "Marcadas na semana" : "Marcadas no mês";
+  const lblPara = periodType === "day" ? "Para hoje" : periodType === "week" ? "Para a semana" : "Para o mês";
+
+  document.getElementById("kpi-row").innerHTML = `
     <div class="kpi-card">
-      <div class="label">Agendadas</div>
-      <div class="val">${ag}</div>
-      <div class="sub">Meta: ${metaAg}</div>
-      <div class="progress-track"><div class="progress-fill blue" style="width:${Math.min(100, (ag / metaAg) * 100)}%"></div></div>
+      <div class="label">${lblCriadas}</div>
+      <div class="val">${criadas.length}</div>
+      <div class="sub">Reuniões que você marcou</div>
+      <div class="progress-track"><div class="progress-fill blue" style="width:${Math.min(100, (criadas.length / metaAg) * 100)}%"></div></div>
+      <div class="sub">Meta marcação: ${metaAg}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">${lblPara}</div>
+      <div class="val">${paraAcontecer.length}</div>
+      <div class="sub">Reuniões agendadas p/ acontecer</div>
     </div>
     <div class="kpi-card">
       <div class="label">Realizadas</div>
@@ -309,61 +375,76 @@ document.getElementById("kpi-row").innerHTML = `
     <div class="kpi-card">
       <div class="label">Vendas</div>
       <div class="val">${vendas}</div>
-      <div class="sub">${fmtMoney(faturamento)}</div>
+      <div class="sub">${fmtMoney(faturamento)} · p/ data de venda</div>
     </div>`;
 
- const pctMeta = Math.min(100, (faturamento / g.salesTarget) * 100);
+  const pctMeta = Math.min(100, (faturamento / g.salesTarget) * 100);
   document.getElementById("meta-faturamento").textContent = fmtMoney(faturamento);
   document.getElementById("meta-pct").textContent = `${pctMeta.toFixed(1)}%`;
   document.getElementById("bar-meta").style.width = `${pctMeta}%`;
   document.getElementById("meta-target-label").textContent = fmtMoney(g.salesTarget);
- const totalDecisao = re + noShow;
+
+  const totalDecisao = re + noShow;
   const pctShow = totalDecisao ? ((re / totalDecisao) * 100).toFixed(1) : "—";
   const pctNoShow = totalDecisao ? ((noShow / totalDecisao) * 100).toFixed(1) : "—";
   const pctConv = totalDecisao ? ((vendas / totalDecisao) * 100).toFixed(1) : "—";
+
   document.getElementById("stats-table").innerHTML = `
-    <tr><td>Agendadas (sem canceladas)</td><td>${ag}</td><td>—</td></tr>
+    <tr><td>Marcadas no período</td><td>${criadas.length}</td><td>—</td></tr>
+    <tr><td>Para acontecer no período</td><td>${paraAcontecer.length}</td><td>—</td></tr>
     <tr><td>Realizadas + Vendas</td><td>${re}</td><td>${pctShow}%</td></tr>
     <tr><td>No-show</td><td>${noShow}</td><td>${pctNoShow}%</td></tr>
-    <tr><td>Vendas fechadas</td><td>${vendas}</td><td>${pctConv}%</td></tr>
-    <tr><td>Taxa show (realizadas ÷ decisão)</td><td colspan="2"><strong>${pctShow}%</strong></td></tr>
-    <tr><td>Taxa conversão (vendas ÷ decisão)</td><td colspan="2"><strong>${pctConv}%</strong></td></tr>`;
-  renderRanking(from, to);
-  const taxa = faturamento > 250000 ? 0.0075 : 0.005; 
+    <tr><td>Vendas (data de fechamento)</td><td>${vendas}</td><td>${pctConv}%</td></tr>
+    <tr><td>Taxa show</td><td colspan="2"><strong>${pctShow}%</strong></td></tr>
+    <tr><td>Taxa conversão</td><td colspan="2"><strong>${pctConv}%</strong></td></tr>`;
+
+  renderRanking(fromD, toD);
+
+  const bonusFrom = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
+  const bonusTo = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0);
+  const bonusMes = bonusNoPeriodo(bonusFrom, bonusTo);
+  const bonusLabel = refDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+
+  const taxa = faturamento > 250000 ? 0.0075 : 0.005;
   const comissaoVendas = faturamento * taxa;
-  const comissaoReunioes = re * 30; 
-  const totalBonus = listaBonus.reduce((a, b) => a + (b.val || 0), 0);
+  const comissaoReunioes = re * 30;
+  const totalBonus = bonusMes.reduce((a, b) => a + (b.val || 0), 0);
   const totalFinal = comissaoVendas + comissaoReunioes + totalBonus;
+
   document.getElementById("val-comissao-vendas").textContent = fmtMoney(comissaoVendas);
-  document.getElementById("val-taxa-comissao").textContent = `Taxa: ${(taxa * 100).toFixed(2)}% sobre vendas`;
+  document.getElementById("val-taxa-comissao").textContent = `Taxa: ${(taxa * 100).toFixed(2)}% sobre vendas do período`;
   const elReunioes = document.getElementById("val-comissao-reunioes");
   if (elReunioes) elReunioes.textContent = fmtMoney(comissaoReunioes);
   const elQtdReunioes = document.getElementById("val-qtd-reunioes");
   if (elQtdReunioes) elQtdReunioes.textContent = `${re} realizadas (R$ 30/cada)`;
   document.getElementById("val-bonus-total").textContent = fmtMoney(totalBonus);
-  document.getElementById("val-bonus-count").textContent = `${listaBonus.length} bônus ativo(s)`;
+  document.getElementById("val-bonus-count").textContent = `${bonusMes.length} bônus em ${bonusLabel}`;
+
   document.getElementById("val-total-final").textContent = fmtMoney(totalFinal);
+
   const preview = document.getElementById("bonus-preview-list");
-  preview.innerHTML = listaBonus.length
-    ? listaBonus.map((b) => `<span class="bonus-chip">${esc(b.desc)} · <strong>${fmtMoney(b.val)}</strong></span>`).join("")
-    : `<span class="text-muted text-sm">Nenhum bônus cadastrado.</span>`;
+  preview.innerHTML = bonusMes.length
+    ? bonusMes.map((b) => `<span class="bonus-chip">${esc(b.desc)} · ${b.data?.split("-").reverse().join("/")} · <strong>${fmtMoney(b.val)}</strong></span>`).join("")
+    : `<span class="text-muted text-sm">Nenhum bônus neste período.</span>`;
+
   const mesFrom = new Date(refDate.getFullYear(), refDate.getMonth(), 1);
   const mesTo = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0);
   const reunioesMes = reunioesNoPeriodo(mesFrom, mesTo);
   const mesRe = reunioesMes.filter((r) => r.status === "Realizada" || r.status === "Venda feita").length;
-  const mesAg = reunioesMes.filter((r) => r.status !== "Cancelada").length; 
+  const mesAg = reunioesMes.filter((r) => r.status !== "Cancelada").length;
   const banner = document.getElementById("status-comissao");
   if (mesAg >= 100 && mesRe >= 50) {
     banner.className = "status-banner success";
-    banner.textContent = `🏆 Comissão liberada! ${mesAg} agendadas e ${mesRe} realizadas no mês.`;
+    banner.textContent = `Comissão liberada! ${mesAg} agendadas e ${mesRe} realizadas no mês.`;
   } else {
     banner.className = "status-banner warning";
-    banner.textContent = `⚠️ Meta p/ liberar: 100 agend. (tem ${mesAg}) e 50 real. (tem ${mesRe}).`;
+    banner.textContent = `Meta p/ liberar: 100 agend. (tem ${mesAg}) e 50 real. (tem ${mesRe}).`;
   }
 }
 
 function renderRanking(from, to) {
   const items = reunioesNoPeriodo(new Date(from), new Date(to));
+  const vendas = vendasNoPeriodo(new Date(from), new Date(to));
   const map = {};
   config.closers.forEach((nome) => {
     map[nome] = { ag: 0, re: 0, ns: 0, vendas: 0, total: 0 };
@@ -374,7 +455,11 @@ function renderRanking(from, to) {
     if (r.status !== "Cancelada") c.ag++;
     if (r.status === "Realizada" || r.status === "Venda feita") c.re++;
     if (r.status === "No show") c.ns++;
-    if (r.status === "Venda feita") { c.vendas++; c.total += r.valor || 0; }
+  });
+  vendas.forEach((r) => {
+    if (!map[r.closer]) map[r.closer] = { ag: 0, re: 0, ns: 0, vendas: 0, total: 0 };
+    map[r.closer].vendas++;
+    map[r.closer].total += r.valor || 0;
   });
   const rows = Object.entries(map)
     .sort((a, b) => b[1].total - a[1].total)
@@ -393,43 +478,37 @@ function renderRanking(from, to) {
 function renderizarTabela() {
   const tbody = document.getElementById("lista-reunioes");
   const closerF = document.getElementById("filtro-closer").value;
-  const deF = document.getElementById("filtro-data-de").value;
-  const ateF = document.getElementById("filtro-data-ate").value;
   const statusF = document.getElementById("filtro-status").value;
-  const tipoF = document.getElementById("filtro-tipo").value;
-  let rows = [...listaReunioes].sort((a, b) => (b.data || "").localeCompare(a.data || ""));
-if (closerF) rows = rows.filter((r) => r.closer === closerF);
-  if (deF) rows = rows.filter((r) => r.data >= deF);
-  if (ateF) rows = rows.filter((r) => r.data <= ateF);
+  const { from, to, label } = getAgendaPeriodRange();
+  document.getElementById("agenda-period-label").textContent = label;
+
+  let rows = [...listaReunioes]
+    .filter((r) => inPeriod(r.data, new Date(from), new Date(to)))
+    .sort((a, b) => (b.data || "").localeCompare(a.data || "") || (b.hora || "").localeCompare(a.hora || ""));
+
+  if (closerF) rows = rows.filter((r) => r.closer === closerF);
   if (statusF) rows = rows.filter((r) => r.status === statusF);
-  if (tipoF === "concluida") rows = rows.filter((r) => r.status === "Realizada" || r.status === "Venda feita");
-  if (tipoF === "venda") rows = rows.filter((r) => r.status === "Venda feita");
-  if (tipoF === "followup") rows = rows.filter((r) => r.followUp && (!r.retornoData || parseDate(r.retornoData) >= new Date()));
-document.getElementById("total-registros").textContent = `${rows.length} registros`;
+
+  document.getElementById("total-registros").textContent = `${rows.length} registros`;
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="10" class="text-muted" style="text-align:center;padding:40px">Nenhuma reunião encontrada.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="text-muted" style="text-align:center;padding:40px">Nenhuma reunião neste período.</td></tr>`;
     return;
   }
+
   tbody.innerHTML = rows.map((r) => {
     const dataFmt = r.data ? r.data.split("-").reverse().join("/") : "—";
-    const retFmt = r.retornoData ? r.retornoData.split("-").reverse().join("/") : "—";
+    const criadaFmt = getCriadoEm(r) ? getCriadoEm(r).split("-").reverse().join("/") : "—";
     const stCls = "st-" + (r.status || "").replace(/\s+/g, "").toLowerCase();
-    const followHtml = r.followUp
-      ? `<span class="followup-badge" title="${esc(r.followUp)}">${esc(r.followUp)}</span>`
-      : `<span class="text-muted">—</span>`;
-    const retHtml = r.retornoData
-      ? `<span class="${parseDate(r.retornoData) < new Date() ? "followup-pending" : ""}">${retFmt}</span>`
-      : `<span class="text-muted">—</span>`;
     return `<tr>
       <td class="lead-cell"><strong>${esc(r.leadNome)}</strong><span>${esc(r.leadEmail || "—")}</span></td>
       <td><span class="tag-temp temp-${r.leadTemp || "Morno"}">${r.leadTemp || "Morno"}</span></td>
       <td>${dataFmt}</td>
+      <td>${fmtHora(r.hora)}</td>
+      <td class="text-muted text-sm">${criadaFmt}</td>
       <td>${esc(r.closer)}</td>
       <td style="max-width:180px;font-size:.78rem">${esc(r.produto)}</td>
       <td>${fmtMoney(r.valor)}</td>
       <td><span class="${stCls}">${r.status}</span></td>
-      <td>${followHtml}</td>
-      <td>${retHtml}</td>
       <td style="white-space:nowrap">
         <button class="btn-icon" onclick="editarReuniao('${r.id}')" title="Editar">✏</button>
         <button class="btn-icon del" onclick="deletarReuniao('${r.id}')" title="Excluir">🗑</button>
@@ -477,6 +556,7 @@ function abrirModalReuniao(isEdicao = false) {
   if (!isEdicao) {
     limparFormReuniao();
     document.getElementById("reuniao-data").value = new Date().toISOString().split("T")[0];
+    document.getElementById("reuniao-hora").value = "10:00";
   }
   renderizarClosersSelect();
   renderizarProdutos();
@@ -517,19 +597,19 @@ function salvarReuniao(e) {
     leadEmail: document.getElementById("lead-email").value.trim(),
     leadTemp: document.getElementById("lead-temp").value,
     data: document.getElementById("reuniao-data").value,
+    hora: document.getElementById("reuniao-hora").value,
     closer: document.getElementById("reuniao-closer").value,
     produto: document.getElementById("reuniao-produto").value,
     valor: parseFloat(document.getElementById("reuniao-valor").value) || 0,
     status: document.getElementById("reuniao-status").value,
     dataVenda: document.getElementById("venda-data").value || null,
-    followUp: document.getElementById("reuniao-followup").value.trim() || null,
-    retornoData: document.getElementById("reuniao-retorno").value || null,
     atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
   };
 
   if (id) {
     db.collection("reunioes_b7").doc(id).update(dados);
   } else {
+    dados.criadoEm = isoToday();
     db.collection("reunioes_b7").add(dados);
   }
   fecharModalReuniao();
@@ -544,12 +624,11 @@ function editarReuniao(id) {
   document.getElementById("lead-email").value = r.leadEmail || "";
   document.getElementById("lead-temp").value = r.leadTemp || "Morno";
   document.getElementById("reuniao-data").value = r.data || "";
+  document.getElementById("reuniao-hora").value = r.hora || "10:00";
   document.getElementById("reuniao-closer").value = r.closer || "";
   document.getElementById("reuniao-produto").value = r.produto || "";
   document.getElementById("reuniao-valor").value = r.valor || 0;
   document.getElementById("reuniao-status").value = r.status || "Agendada";
-  document.getElementById("reuniao-followup").value = r.followUp || "";
-  document.getElementById("reuniao-retorno").value = r.retornoData || "";
   toggleDataVenda();
   if (r.dataVenda) document.getElementById("venda-data").value = r.dataVenda;
 }
@@ -569,6 +648,8 @@ function limparFormReuniao() {
 // ==========================================
 
 function abrirModalBonus() {
+  const dataInput = document.getElementById("novo-bonus-data");
+  if (dataInput && !dataInput.value) dataInput.value = isoToday();
   renderizarListaBonusModal();
   document.getElementById("modal-bonus").hidden = false;
 }
@@ -580,11 +661,13 @@ function adicionarBonus(e) {
   const user = auth.currentUser;
   const desc = document.getElementById("novo-bonus-desc").value.trim();
   const val = parseFloat(document.getElementById("novo-bonus-val").value);
-  
-  if (desc && val && user) {
-    db.collection("bonus_sdr").add({ userId: user.uid, desc, val }).then(() => {
+  const data = document.getElementById("novo-bonus-data").value;
+
+  if (desc && val && data && user) {
+    db.collection("bonus_sdr").add({ userId: user.uid, desc, val, data }).then(() => {
       document.getElementById("novo-bonus-desc").value = "";
       document.getElementById("novo-bonus-val").value = "";
+      document.getElementById("novo-bonus-data").value = isoToday();
     });
   }
 }
@@ -593,14 +676,19 @@ function removerBonus(id) { db.collection("bonus_sdr").doc(id).delete(); }
 
 function renderizarListaBonusModal() {
   const container = document.getElementById("lista-bonus-container");
+  const sorted = [...listaBonus].sort((a, b) => (b.data || "").localeCompare(a.data || ""));
   let total = 0;
-  if (!listaBonus.length) {
+  if (!sorted.length) {
     container.innerHTML = `<span class="text-muted text-sm" style="padding:12px">Nenhum bônus cadastrado.</span>`;
   } else {
-    container.innerHTML = listaBonus.map((b) => {
+    container.innerHTML = sorted.map((b) => {
       total += b.val || 0;
+      const dataFmt = b.data ? b.data.split("-").reverse().join("/") : "Sem data";
       return `<div class="bonus-item">
-        <div><strong>${esc(b.desc)}</strong><div class="text-sm" style="color:var(--green)">${fmtMoney(b.val)}</div></div>
+        <div><strong>${esc(b.desc)}</strong>
+          <div class="text-sm" style="color:var(--muted)">${dataFmt}</div>
+          <div class="text-sm" style="color:var(--green)">${fmtMoney(b.val)}</div>
+        </div>
         <button class="btn-icon del" onclick="removerBonus('${b.id}')" type="button">🗑</button>
       </div>`;
     }).join("");
@@ -621,10 +709,7 @@ function renderConfigForm() {
     <label>Semanal — realizadas</label><input type="number" id="cfg-weekly-re" value="${g.weeklyRe}">
     <label>Mensal — agendadas</label><input type="number" id="cfg-monthly-ag" value="${g.monthlyAg}">
     <label>Mensal — realizadas</label><input type="number" id="cfg-monthly-re" value="${g.monthlyRe}">`;
-document.getElementById("cfg-meta-vendas").value = g.salesTarget;
-  document.getElementById("cfg-comissao").value = (config.commissionRate * 100).toFixed(2);
-  document.getElementById("cfg-min-realizadas").value = g.minRealizadas;
-const list = document.getElementById("closers-config-list");
+  const list = document.getElementById("closers-config-list");
   list.innerHTML = config.closers.map((c, i) => `
     <div class="closer-row">
       <input type="text" value="${esc(c)}" data-idx="${i}">

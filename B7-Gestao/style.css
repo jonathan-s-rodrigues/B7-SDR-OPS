@@ -311,5 +311,31 @@ body {
 .text-sm { font-size: .82rem; }
 .text-xs { font-size: .72rem; }
 
+.period-nav--inline {
+    flex-wrap: wrap;
+    margin: 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.bonus-add-form input[type="date"] {
+    min-width: 140px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px;
+    color: var(--text);
+}
+
+.filters-bar .period-nav--inline select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: .82rem;
+}
+
 .lead-cell strong { display: block; font-size: .88rem; }
 .lead-cell span { font-size: .75rem; color: var(--muted); }
