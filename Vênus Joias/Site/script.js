@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, getDocs, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 /**
  * Adiciona um produto ao estoque (Firestore) e atualiza o catálogo automaticamente.
@@ -278,34 +278,9 @@ function escapeHtml(str) {
     .replaceAll("'", '&#039;');
 }
 
-function docMillis(data) {
-  const c = data?.createdAt;
-  if (!c) return 0;
-  try {
-    return typeof c.toMillis === 'function' ? c.toMillis() : 0;
-  } catch {
-    return 0;
-  }
-}
-
 async function loadProductsFromFirestore() {
   const produtosRef = collection(db, 'produtos');
-  let snapshots;
-  try {
-    const snapOrdered = await getDocs(query(produtosRef, orderBy('createdAt', 'desc')));
-    snapshots = snapOrdered.docs;
-  } catch (e1) {
-    console.warn('[catálogo] query ordenada falhou, tentando leitura simples:', e1?.message || e1);
-    try {
-      const snapAll = await getDocs(produtosRef);
-      snapshots = [...snapAll.docs].sort(
-        (a, b) => docMillis(b.data()) - docMillis(a.data()),
-      );
-    } catch (e2) {
-      console.error('[catálogo] Firestore:', e2);
-      throw e2;
-    }
-  }
+  const snapshots = (await getDocs(produtosRef)).docs;
 
   PRODUCTS = snapshots.map(d => {
     const data = d.data() || {};
@@ -322,7 +297,9 @@ async function loadProductsFromFirestore() {
       imagem,
       estoque,
     };
-  }).filter(p => p.preco > 0);
+  }).filter(p => p.preco > 0).sort((a, b) =>
+    labelCategoria(a.categoria).localeCompare(labelCategoria(b.categoria), 'pt-BR') ||
+    a.nome.localeCompare(b.nome, 'pt-BR', { numeric: true }) || a.id.localeCompare(b.id));
 }
 
 function wireEvents() {

@@ -23,7 +23,6 @@
             <input type="password" id="login-senha" placeholder="Senha">
         </div>
         <button class="btn-adicionar" id="btnLogar">Entrar</button>
-        <button class="btn-secundario" id="btnCriarConta" style="margin-top: 10px;">Criar Conta de Teste</button>
         <p id="login-erro" style="color: red; font-size: 0.8rem; margin-top: 10px; display: none;">Acesso negado.</p>
     </div>
 </div>
@@ -45,44 +44,49 @@
 <main>
     <section id="aba-pedidos" class="aba-conteudo">
         <div class="card no-print">
-            <h3>➕ Novo Pedido</h3>
+            <h3>1. Identifique a cliente</h3>
+            <p class="ajuda-pedido">Preencha os dados, adicione as joias e confira o total antes de salvar.</p>
             <div class="grid-form">
                 <div class="campo">
-                    <label>Nome da Cliente</label>
+                    <label for="cliente">Nome da Cliente</label>
                     <input type="text" id="cliente" placeholder="Helena Souza">
                 </div>
                 <div class="campo">
-                    <label>Data</label>
+                    <label for="data">Data</label>
                     <input type="date" id="data">
                 </div>
             </div>
 
             <hr class="divisor">
+            <h3>2. Adicione as joias</h3>
 
             <div class="grid-form">
                 <div class="campo">
-                    <label>Item / Joia</label>
-                    <input type="text" id="itemNome" placeholder="Ex: Anel Pérola" list="produtosList">
+                    <label for="itemNome">Item / Joia</label>
+                    <input type="text" id="itemNome" placeholder="Busque um produto ou digite o nome" list="produtosList">
                     <datalist id="produtosList"></datalist>
                 </div>
                 <div class="campo">
-                    <label>Valor Unit.</label>
-                    <input type="number" id="itemValor" step="0.01" placeholder="0.00">
+                    <label for="itemValor">Valor Unit.</label>
+                    <input type="number" id="itemValor" step="0.01" min="0.01" placeholder="0.00">
                 </div>
                 <div class="campo">
-                    <label>Qtd</label>
-                    <input type="number" id="itemQtd" value="1">
+                    <label for="itemQtd">Qtd</label>
+                    <input type="number" id="itemQtd" value="1" min="1" step="1">
                 </div>
                 <div class="campo btn-alinhar">
-                    <button class="btn-secundario" id="btnAddItem">+ Adicionar</button>
+                    <button class="btn-secundario" id="btnAddItem">+ Adicionar ao pedido</button>
                 </div>
             </div>
 
+            <h3>3. Confira e salve</h3>
             <div id="listaItensTemporaria" class="lista-itens-temp"></div>
+            <div class="resumo-pedido" aria-live="polite"><span id="quantidadePedido">0 itens</span><strong id="totalPedido">Total: R$ 0,00</strong></div>
 
-            <button class="btn-adicionar" id="btnFinalizar" style="display: none;">
-                Finalizar e Salvar na Nuvem
+            <button class="btn-adicionar" id="btnFinalizar" disabled>
+                Salvar pedido
             </button>
+            <p id="statusPedido" role="status" aria-live="polite"></p>
         </div>
 
         <div class="card">
@@ -104,18 +108,18 @@
         <div id="formProduto" class="form-produto">
             <div class="grid-form">
                 <div class="campo">
-                    <label>Descrição do Produto</label>
+                    <label for="prodDescricao">Descrição do Produto</label>
                     <input type="text" id="prodDescricao" placeholder="Ex: Anel de Ouro com Diamante">
                 </div>
                 <div class="campo">
-                    <label>Preço de Custo (R$)</label>
+                    <label for="prodCusto">Preço de Custo (R$)</label>
                     <input type="number" id="prodCusto" step="0.01" placeholder="0.00">
                 </div>
             </div>
 
             <div class="grid-form">
                 <div class="campo">
-                    <label>Categoria (site)</label>
+                    <label for="prodCategoria">Categoria (site)</label>
                     <select id="prodCategoria">
                         <option value="pulseiras">Pulseiras</option>
                         <option value="colares">Colares</option>
@@ -124,10 +128,11 @@
                         <option value="correntes">Correntes</option>
                         <option value="tornozeleiras">Tornozeleiras</option>
                         <option value="acessorios">Acessórios</option>
+                        <option value="itens">Itens</option>
                     </select>
                 </div>
                 <div class="campo">
-                    <label>Preço final (venda) (R$)</label>
+                    <label for="prodPrecoFinal">Preço final (venda) (R$)</label>
                     <input type="number" id="prodPrecoFinal" step="0.01" placeholder="0.00">
                     <small style="color: #777; font-size: 0.72rem; display: block; margin-top: 6px;">
                         O cálculo abaixo é um <strong>valor sugerido</strong>. Você pode ajustar o preço final acima.
@@ -137,7 +142,7 @@
 
             <div class="grid-form">
                 <div class="campo">
-                    <label>Quantidade em estoque</label>
+                    <label for="prodEstoque">Quantidade em estoque</label>
                     <input type="number" id="prodEstoque" step="1" min="0" value="0">
                     <small style="color: #777; font-size: 0.72rem; display: block; margin-top: 6px;">
                         Quando estiver <strong>0</strong>, o produto ficará <strong>indisponível</strong> no site.
@@ -147,9 +152,9 @@
 
             <div class="grid-form">
                 <div class="campo">
-                    <label>📸 Foto do Produto</label>
+                    <label for="prodFoto">📸 Foto do Produto</label>
                     <input type="file" id="prodFoto" accept="image/*">
-                    <small style="color: #999; font-size: 0.7rem; display: block; margin-top: 5px;">Máximo: 1MB por imagem</small>
+                    <small style="color: #999; font-size: 0.7rem; display: block; margin-top: 5px;">Até 10 MB. A foto será otimizada automaticamente. Ao editar, a foto atual é mantida até você escolher outra.</small>
                     <div id="previewFoto" style="margin-top: 10px; text-align: center;">
                         <img id="imgPreview" style="max-width: 100%; max-height: 150px; border-radius: 8px; display:none;">
                         <p id="textoPreview" style="color: #999; font-size: 0.8rem; margin: 0;">Nenhuma imagem selecionada</p>
@@ -175,9 +180,15 @@
                 <button class="btn-adicionar" id="btnSalvarProduto">💾 Salvar Produto</button>
                 <button class="btn-secundario" id="btnCancelar" style="display:none;">Cancelar</button>
             </div>
+            <p id="statusProduto" role="status" aria-live="polite"></p>
         </div>
 
         <!-- Lista de Produtos -->
+        <div class="campo">
+            <label for="filtroCategoria">Filtrar por categoria</label>
+            <select id="filtroCategoria"><option value="">Todas as categorias</option></select>
+            <small>Produtos ordenados por categoria e nome.</small>
+        </div>
         <div id="listaProdutos" class="lista-produtos">
             <p class="vazio">Carregando produtos...</p>
         </div>

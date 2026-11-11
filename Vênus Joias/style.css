@@ -331,3 +331,15 @@ input:focus {
 .small-brand .logo-small { width: 45px; height: auto; border-radius: 8px; }
 
 section#aba-produtos .small-brand h3 { font-family: 'Cinzel', serif; display: inline; color: var(--primary-gold); font-size: 1.2rem; }
+
+.ajuda-pedido { color: #665b54; font-size: .85rem; line-height: 1.6; }
+.resumo-pedido { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 18px 0; }
+.item-rascunho { display: grid; grid-template-columns: minmax(0, 1fr) 80px auto auto; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--soft-nude); }
+.item-rascunho small { display: block; margin-top: 6px; }
+.item-rascunho input { width: 100%; box-sizing: border-box; }
+#statusProduto, #statusPedido { font-size: .85rem; line-height: 1.5; }
+button:disabled { opacity: .55; cursor: wait; }
+#btnFinalizar:disabled { cursor: default; }
+@media (max-width: 600px) {
+    .item-rascunho { grid-template-columns: minmax(0, 1fr) 70px; }
+}
